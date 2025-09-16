@@ -6,25 +6,35 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f8f5f2; }
     .hidden { display: none; }
-    h1 { color: brown; }
+    h1 { color: #4e342e; text-align: center; }
+    h2 { color: #5d4037; border-bottom: 2px solid #d7ccc8; padding-bottom: 5px; }
     ul { list-style-type: none; padding: 0; }
-    li { margin: 5px 0; padding: 5px; border-bottom: 1px solid #ddd; }
-    button { margin-left: 10px; }
+    li { margin: 8px 0; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #fff; }
+    button { 
+      margin-top: 5px; padding: 5px 12px; border: none; 
+      border-radius: 6px; cursor: pointer; 
+    }
     .done { color: green; font-weight: bold; }
     .pending { color: red; font-weight: bold; }
+    #loginSection input { display: block; margin: 6px 0; padding: 8px; width: 200px; }
+    #tvOrders li { font-size: 1.5em; font-weight: bold; text-align: center; }
+    .btn-login { background: #6d4c41; color: white; }
+    .btn-done { background: #4caf50; color: white; }
+    .btn-delete { background: #e53935; color: white; }
+    .btn-add { background: #8d6e63; color: white; }
   </style>
 </head>
 <body>
-  <h1>#KopibeneranKopi</h1>
+  <h1>☕ #KopibeneranKopi</h1>
 
   <!-- LOGIN -->
   <div id="loginSection">
     <h2>Login</h2>
     <input type="text" id="username" placeholder="Username">
     <input type="password" id="password" placeholder="Password">
-    <button onclick="login()">Login</button>
+    <button class="btn-login" onclick="login()">Login</button>
   </div>
 
   <!-- KASIR -->
@@ -32,7 +42,7 @@
     <h2>Kasir - Input Transaksi</h2>
     <select id="menuKasir"></select>
     <input type="number" id="qtyKasir" placeholder="Jumlah" min="1">
-    <button onclick="addOrder()">Tambahkan Pesanan</button>
+    <button class="btn-add" onclick="addOrder()">Tambahkan Pesanan</button>
     <div id="kasirMsg"></div>
   </div>
 
@@ -47,7 +57,7 @@
     <h2>Owner - Manajemen Menu</h2>
     <input type="text" id="menuOwner" placeholder="Menu Baru">
     <input type="number" id="hargaOwner" placeholder="Harga">
-    <button onclick="addMenu()">Tambah Menu</button>
+    <button class="btn-add" onclick="addMenu()">Tambah Menu</button>
     <h3>Daftar Menu</h3>
     <ul id="menuList"></ul>
     <h3>Laporan Harian</h3>
@@ -60,7 +70,7 @@
 
   <!-- TV ANTRIAN -->
   <div id="tvSection" class="hidden">
-    <h2>TV Antrian</h2>
+    <h2 style="text-align:center;">📺 TV Antrian</h2>
     <ul id="tvOrders"></ul>
   </div>
 
@@ -139,10 +149,10 @@
       snapshot.forEach(child => {
         let order = child.val();
         let li = document.createElement("li");
-        li.innerHTML = `${order.menu} x ${order.qty} 
+        li.innerHTML = `<b>${order.menu}</b> x ${order.qty} 
           <span class="${order.status}">[${order.status}]</span>`;
         if (order.status === "pending") {
-          li.innerHTML += ` <button onclick="doneOrder('${child.key}')">Selesai</button>`;
+          li.innerHTML += ` <button class="btn-done" onclick="doneOrder('${child.key}')">Selesai</button>`;
         }
         list.appendChild(li);
       });
@@ -169,7 +179,7 @@
       snapshot.forEach(child => {
         let li = document.createElement("li");
         li.innerHTML = `${child.key} - Rp${child.val().harga}
-          <button onclick="deleteMenu('${child.key}')">Hapus</button>`;
+          <button class="btn-delete" onclick="deleteMenu('${child.key}')">Hapus</button>`;
         menuList.appendChild(li);
       });
     });
@@ -193,7 +203,7 @@
   }
 
   function laporanBulanan() {
-    let ym = new Date().toISOString().slice(0,7); // yyyy-mm
+    let ym = new Date().toISOString().slice(0,7);
     db.ref("orders").once("value").then(snapshot => {
       let hasil = [];
       snapshot.forEach(child => {
@@ -218,6 +228,27 @@
       });
     });
   }
+
+  // ---------- Tambahkan Menu Default ----------
+  const defaultMenus = {
+    "kopi susu gula aren": { harga: 8000 },
+    "kopi susu latte": { harga: 8000 },
+    "americano": { harga: 6000 },
+    "capuchino": { harga: 10000 },
+    "taro coffe": { harga: 10000 },
+    "taro latte": { harga: 8000 },
+    "coklat latte": { harga: 8000 },
+    "redvelvet latte": { harga: 8000 },
+    "Creamy": { harga: 1000 },
+    "Aren": { harga: 1000 },
+    "Es Batu": { harga: 1000 }
+  };
+
+  db.ref("menus").once("value").then(snapshot => {
+    if (!snapshot.exists()) {
+      db.ref("menus").set(defaultMenus);
+    }
+  });
 </script>
 </body>
 </html>
