@@ -12,10 +12,7 @@
     h2 { color: #5d4037; border-bottom: 2px solid #d7ccc8; padding-bottom: 5px; }
     ul { list-style-type: none; padding: 0; }
     li { margin: 8px 0; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #fff; }
-    button { 
-      margin-top: 5px; padding: 5px 12px; border: none; 
-      border-radius: 6px; cursor: pointer; 
-    }
+    button { margin-top: 5px; padding: 5px 12px; border: none; border-radius: 6px; cursor: pointer; }
     .done { color: green; font-weight: bold; }
     .pending { color: red; font-weight: bold; }
     #loginSection input { display: block; margin: 6px 0; padding: 8px; width: 200px; }
@@ -42,7 +39,13 @@
     <h2>Kasir - Input Transaksi</h2>
     <select id="menuKasir"></select>
     <input type="number" id="qtyKasir" placeholder="Jumlah" min="1">
-    <button class="btn-add" onclick="addOrder()">Tambahkan Pesanan</button>
+    <button class="btn-add" onclick="addToCart()">Tambahkan ke Keranjang</button>
+    <h3>Keranjang</h3>
+    <ul id="cartList"></ul>
+    <p><b>Total: Rp<span id="cartTotal">0</span></b></p>
+    <p>Bayar: <input type="number" id="payment" placeholder="Jumlah bayar"></p>
+    <p>Kembalian: Rp<span id="change">0</span></p>
+    <button class="btn-add" onclick="checkout()">Checkout & Kirim Struk</button>
     <div id="kasirMsg"></div>
   </div>
 
@@ -60,9 +63,11 @@
     <button class="btn-add" onclick="addMenu()">Tambah Menu</button>
     <h3>Daftar Menu</h3>
     <ul id="menuList"></ul>
+
     <h3>Laporan Harian</h3>
     <button onclick="laporanHarian()">Tarik Laporan Harian</button>
     <pre id="laporanHarian"></pre>
+
     <h3>Laporan Bulanan</h3>
     <button onclick="laporanBulanan()">Tarik Laporan Bulanan</button>
     <pre id="laporanBulanan"></pre>
@@ -128,17 +133,85 @@
     });
   }
 
-  function addOrder() {
+  // ----- KASIR CART -----
+  let cart = {};
+  let total = 0;
+
+  function addToCart() {
     let menu = document.getElementById("menuKasir").value;
     let qty = parseInt(document.getElementById("qtyKasir").value);
+    if (!qty || qty <= 0) return alert("Jumlah tidak valid!");
+
+    db.ref("menus/" + menu).once("value").then(snapshot => {
+      let harga = snapshot.val().harga;
+      if (!cart[menu]) cart[menu] = { qty: 0, harga: harga };
+      cart[menu].qty += qty;
+      updateCart();
+    });
+  }
+
+  function updateCart() {
+    let cartList = document.getElementById("cartList");
+    cartList.innerHTML = "";
+    total = 0;
+
+    Object.keys(cart).forEach(menu => {
+      let item = cart[menu];
+      let subtotal = item.qty * item.harga;
+      total += subtotal;
+
+      let li = document.createElement("li");
+      li.textContent = `${menu} ${item.qty} x ${item.harga} = Rp${subtotal}`;
+      cartList.appendChild(li);
+    });
+
+    document.getElementById("cartTotal").innerText = total;
+
+    // Hitung kembalian otomatis
+    let bayar = parseInt(document.getElementById("payment").value) || 0;
+    document.getElementById("change").innerText = bayar - total >= 0 ? (bayar - total) : 0;
+  }
+
+  document.getElementById("payment").addEventListener("input", updateCart);
+
+  function checkout() {
+    if (total <= 0) return alert("Keranjang kosong!");
+    let bayar = parseInt(document.getElementById("payment").value);
+    if (!bayar || bayar < total) return alert("Pembayaran kurang!");
+
+    // Simpan ke Firebase orders
     let newOrder = db.ref("orders").push();
     newOrder.set({
-      menu: menu,
-      qty: qty,
+      items: cart,
+      total: total,
       status: "pending",
       time: new Date().toISOString()
     });
-    document.getElementById("kasirMsg").innerText = "Pesanan dikirim ke Barista!";
+
+    // Buat struk
+    let struk = "☕ Numpang Ngopi CRB\n";
+    struk += "=====================\n";
+    Object.keys(cart).forEach(menu => {
+      let item = cart[menu];
+      let subtotal = item.qty * item.harga;
+      struk += `${menu} ${item.qty} x ${item.harga} = Rp${subtotal}\n`;
+    });
+    struk += "---------------------\n";
+    struk += `Total: Rp${total}\nBayar: Rp${bayar}\nKembali: Rp${bayar - total}\n`;
+    struk += "=====================\nTerima kasih! #KopibeneranKopi";
+
+    // Kirim ke WhatsApp pelanggan
+    let phone = prompt("Masukkan nomor WhatsApp pelanggan (contoh: 628123456789):");
+    if (phone) {
+      let url = `https://wa.me/${phone}?text=${encodeURIComponent(struk)}`;
+      window.open(url, "_blank");
+    }
+
+    // Reset keranjang
+    cart = {};
+    updateCart();
+    document.getElementById("payment").value = "";
+    alert("Pesanan dikirim ke Barista!");
   }
 
   // ---------- Barista ----------
@@ -149,8 +222,17 @@
       snapshot.forEach(child => {
         let order = child.val();
         let li = document.createElement("li");
-        li.innerHTML = `<b>${order.menu}</b> x ${order.qty} 
-          <span class="${order.status}">[${order.status}]</span>`;
+        if (order.items) {
+          li.innerHTML = `<b>Pesanan</b><br>`;
+          Object.keys(order.items).forEach(m => {
+            let it = order.items[m];
+            li.innerHTML += `- ${m} ${it.qty}x<br>`;
+          });
+          li.innerHTML += `<b>Total: Rp${order.total}</b> `;
+        } else {
+          li.innerHTML = `<b>${order.menu}</b> x ${order.qty}`;
+        }
+        li.innerHTML += ` <span class="${order.status}">[${order.status}]</span>`;
         if (order.status === "pending") {
           li.innerHTML += ` <button class="btn-done" onclick="doneOrder('${child.key}')">Selesai</button>`;
         }
@@ -222,8 +304,17 @@
       snapshot.forEach(child => {
         let order = child.val();
         let li = document.createElement("li");
-        li.innerHTML = `${order.menu} x ${order.qty} 
-          <span class="${order.status}">[${order.status}]</span>`;
+        if (order.items) {
+          li.innerHTML = `<b>Pesanan</b><br>`;
+          Object.keys(order.items).forEach(m => {
+            let it = order.items[m];
+            li.innerHTML += `- ${m} ${it.qty}x<br>`;
+          });
+          li.innerHTML += `<b>Total: Rp${order.total}</b> `;
+        } else {
+          li.innerHTML = `${order.menu} x ${order.qty}`;
+        }
+        li.innerHTML += ` <span class="${order.status}">[${order.status}]</span>`;
         list.appendChild(li);
       });
     });
