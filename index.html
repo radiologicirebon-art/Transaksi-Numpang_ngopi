@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Numpang Ngopi CRB</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .hidden { display: none; }
+    h1 { color: brown; }
+    ul { list-style-type: none; padding: 0; }
+    li { margin: 5px 0; padding: 5px; border-bottom: 1px solid #ddd; }
+    button { margin-left: 10px; }
+    .done { color: green; font-weight: bold; }
+    .pending { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>#KopibeneranKopi</h1>
+
+  <!-- LOGIN -->
+  <div id="loginSection">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
+
+  <!-- KASIR -->
+  <div id="kasirSection" class="hidden">
+    <h2>Kasir - Input Transaksi</h2>
+    <select id="menuKasir"></select>
+    <input type="number" id="qtyKasir" placeholder="Jumlah" min="1">
+    <button onclick="addOrder()">Tambahkan Pesanan</button>
+    <div id="kasirMsg"></div>
+  </div>
+
+  <!-- BARISTA -->
+  <div id="baristaSection" class="hidden">
+    <h2>Barista - Keranjang Pesanan</h2>
+    <ul id="orderList"></ul>
+  </div>
+
+  <!-- OWNER -->
+  <div id="ownerSection" class="hidden">
+    <h2>Owner - Manajemen Menu</h2>
+    <input type="text" id="menuOwner" placeholder="Menu Baru">
+    <input type="number" id="hargaOwner" placeholder="Harga">
+    <button onclick="addMenu()">Tambah Menu</button>
+    <h3>Daftar Menu</h3>
+    <ul id="menuList"></ul>
+    <h3>Laporan Harian</h3>
+    <button onclick="laporanHarian()">Tarik Laporan Harian</button>
+    <pre id="laporanHarian"></pre>
+    <h3>Laporan Bulanan</h3>
+    <button onclick="laporanBulanan()">Tarik Laporan Bulanan</button>
+    <pre id="laporanBulanan"></pre>
+  </div>
+
+  <!-- TV ANTRIAN -->
+  <div id="tvSection" class="hidden">
+    <h2>TV Antrian</h2>
+    <ul id="tvOrders"></ul>
+  </div>
+
+<script>
+  // ---------- Firebase Config ----------
+  const firebaseConfig = {
+    databaseURL: "https://depelop-nnc-default-rtdb.firebaseio.com/"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // ---------- Login ----------
+  function login() {
+    let user = document.getElementById("username").value;
+    let pass = document.getElementById("password").value;
+
+    db.ref("users/" + user).once("value").then(snapshot => {
+      let data = snapshot.val();
+      if (data && data.password === pass) {
+        sessionStorage.setItem("role", data.role);
+        showSection(data.role);
+        if (data.role === "kasir") loadMenus();
+        if (data.role === "owner") loadMenusOwner();
+      } else {
+        alert("Login gagal!");
+      }
+    });
+  }
+
+  function showSection(role) {
+    document.getElementById("loginSection").classList.add("hidden");
+    if (role === "kasir") document.getElementById("kasirSection").classList.remove("hidden");
+    if (role === "barista") {
+      document.getElementById("baristaSection").classList.remove("hidden");
+      listenOrders();
+    }
+    if (role === "owner") document.getElementById("ownerSection").classList.remove("hidden");
+    if (role === "tv") {
+      document.getElementById("tvSection").classList.remove("hidden");
+      listenTV();
+    }
+  }
+
+  // ---------- Kasir ----------
+  function loadMenus() {
+    db.ref("menus").once("value").then(snapshot => {
+      let menuKasir = document.getElementById("menuKasir");
+      menuKasir.innerHTML = "";
+      snapshot.forEach(child => {
+        let opt = document.createElement("option");
+        opt.value = child.key;
+        opt.textContent = `${child.key} - Rp${child.val().harga}`;
+        menuKasir.appendChild(opt);
+      });
+    });
+  }
+
+  function addOrder() {
+    let menu = document.getElementById("menuKasir").value;
+    let qty = parseInt(document.getElementById("qtyKasir").value);
+    let newOrder = db.ref("orders").push();
+    newOrder.set({
+      menu: menu,
+      qty: qty,
+      status: "pending",
+      time: new Date().toISOString()
+    });
+    document.getElementById("kasirMsg").innerText = "Pesanan dikirim ke Barista!";
+  }
+
+  // ---------- Barista ----------
+  function listenOrders() {
+    db.ref("orders").on("value", snapshot => {
+      let list = document.getElementById("orderList");
+      list.innerHTML = "";
+      snapshot.forEach(child => {
+        let order = child.val();
+        let li = document.createElement("li");
+        li.innerHTML = `${order.menu} x ${order.qty} 
+          <span class="${order.status}">[${order.status}]</span>`;
+        if (order.status === "pending") {
+          li.innerHTML += ` <button onclick="doneOrder('${child.key}')">Selesai</button>`;
+        }
+        list.appendChild(li);
+      });
+    });
+  }
+
+  function doneOrder(id) {
+    db.ref("orders/" + id).update({ status: "done" });
+  }
+
+  // ---------- Owner ----------
+  function addMenu() {
+    let menu = document.getElementById("menuOwner").value;
+    let harga = document.getElementById("hargaOwner").value;
+    db.ref("menus/" + menu).set({ harga: parseInt(harga) });
+    loadMenusOwner();
+    alert("Menu ditambahkan!");
+  }
+
+  function loadMenusOwner() {
+    db.ref("menus").once("value").then(snapshot => {
+      let menuList = document.getElementById("menuList");
+      menuList.innerHTML = "";
+      snapshot.forEach(child => {
+        let li = document.createElement("li");
+        li.innerHTML = `${child.key} - Rp${child.val().harga}
+          <button onclick="deleteMenu('${child.key}')">Hapus</button>`;
+        menuList.appendChild(li);
+      });
+    });
+  }
+
+  function deleteMenu(menu) {
+    db.ref("menus/" + menu).remove();
+    loadMenusOwner();
+  }
+
+  function laporanHarian() {
+    let today = new Date().toISOString().split("T")[0];
+    db.ref("orders").once("value").then(snapshot => {
+      let hasil = [];
+      snapshot.forEach(child => {
+        let o = child.val();
+        if (o.time.startsWith(today)) hasil.push(o);
+      });
+      document.getElementById("laporanHarian").textContent = JSON.stringify(hasil, null, 2);
+    });
+  }
+
+  function laporanBulanan() {
+    let ym = new Date().toISOString().slice(0,7); // yyyy-mm
+    db.ref("orders").once("value").then(snapshot => {
+      let hasil = [];
+      snapshot.forEach(child => {
+        let o = child.val();
+        if (o.time.startsWith(ym)) hasil.push(o);
+      });
+      document.getElementById("laporanBulanan").textContent = JSON.stringify(hasil, null, 2);
+    });
+  }
+
+  // ---------- TV Antrian ----------
+  function listenTV() {
+    db.ref("orders").on("value", snapshot => {
+      let list = document.getElementById("tvOrders");
+      list.innerHTML = "";
+      snapshot.forEach(child => {
+        let order = child.val();
+        let li = document.createElement("li");
+        li.innerHTML = `${order.menu} x ${order.qty} 
+          <span class="${order.status}">[${order.status}]</span>`;
+        list.appendChild(li);
+      });
+    });
+  }
+</script>
+</body>
+</html>
