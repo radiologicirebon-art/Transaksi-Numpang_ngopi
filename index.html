@@ -3,31 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <title>Numpang Ngopi CRB</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f8f5f2; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 10px;
+      background: #f8f5f2;
+    }
+
+    h1 { 
+      color: #4e342e; 
+      text-align: center; 
+      font-size: 1.6rem;
+    }
+    h2 { 
+      color: #5d4037; 
+      border-bottom: 2px solid #d7ccc8; 
+      padding-bottom: 5px; 
+      font-size: 1.2rem;
+    }
+
     .hidden { display: none; }
-    h1 { color: #4e342e; text-align: center; }
-    h2 { color: #5d4037; border-bottom: 2px solid #d7ccc8; padding-bottom: 5px; }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 12px 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
     ul { list-style-type: none; padding: 0; }
-    li { margin: 8px 0; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #fff; }
-    button { margin-top: 5px; padding: 5px 12px; border: none; border-radius: 6px; cursor: pointer; }
+    li { 
+      margin: 8px 0; 
+      padding: 10px; 
+      border: 1px solid #ddd; 
+      border-radius: 8px; 
+      background: #fafafa; 
+      font-size: 0.95rem;
+    }
+
+    button {
+      margin-top: 8px; 
+      padding: 10px 15px; 
+      border: none; 
+      border-radius: 6px; 
+      cursor: pointer; 
+      font-size: 1rem;
+      width: 100%;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
     .done { color: green; font-weight: bold; }
     .pending { color: red; font-weight: bold; }
-    #loginSection input { display: block; margin: 6px 0; padding: 8px; width: 200px; }
-    #tvOrders li { font-size: 1.5em; font-weight: bold; text-align: center; }
+
     .btn-login { background: #6d4c41; color: white; }
     .btn-done { background: #4caf50; color: white; }
     .btn-delete { background: #e53935; color: white; }
     .btn-add { background: #8d6e63; color: white; }
+
+    /* Responsif */
+    @media (min-width: 768px) {
+      body { margin: 20px auto; max-width: 600px; }
+      button, input, select { width: auto; }
+    }
   </style>
 </head>
 <body>
   <h1>☕ #KopibeneranKopi</h1>
 
   <!-- LOGIN -->
-  <div id="loginSection">
+  <div id="loginSection" class="card">
     <h2>Login</h2>
     <input type="text" id="username" placeholder="Username">
     <input type="password" id="password" placeholder="Password">
@@ -35,7 +94,7 @@
   </div>
 
   <!-- KASIR -->
-  <div id="kasirSection" class="hidden">
+  <div id="kasirSection" class="hidden card">
     <h2>Kasir - Input Transaksi</h2>
     <select id="menuKasir"></select>
     <input type="number" id="qtyKasir" placeholder="Jumlah" min="1">
@@ -50,13 +109,13 @@
   </div>
 
   <!-- BARISTA -->
-  <div id="baristaSection" class="hidden">
+  <div id="baristaSection" class="hidden card">
     <h2>Barista - Keranjang Pesanan</h2>
     <ul id="orderList"></ul>
   </div>
 
   <!-- OWNER -->
-  <div id="ownerSection" class="hidden">
+  <div id="ownerSection" class="hidden card">
     <h2>Owner - Manajemen Menu</h2>
     <input type="text" id="menuOwner" placeholder="Menu Baru">
     <input type="number" id="hargaOwner" placeholder="Harga">
@@ -74,7 +133,7 @@
   </div>
 
   <!-- TV ANTRIAN -->
-  <div id="tvSection" class="hidden">
+  <div id="tvSection" class="hidden card">
     <h2 style="text-align:center;">📺 TV Antrian</h2>
     <ul id="tvOrders"></ul>
   </div>
@@ -133,7 +192,6 @@
     });
   }
 
-  // ----- KASIR CART -----
   let cart = {};
   let total = 0;
 
@@ -167,7 +225,6 @@
 
     document.getElementById("cartTotal").innerText = total;
 
-    // Hitung kembalian otomatis
     let bayar = parseInt(document.getElementById("payment").value) || 0;
     document.getElementById("change").innerText = bayar - total >= 0 ? (bayar - total) : 0;
   }
@@ -179,7 +236,6 @@
     let bayar = parseInt(document.getElementById("payment").value);
     if (!bayar || bayar < total) return alert("Pembayaran kurang!");
 
-    // Simpan ke Firebase orders
     let newOrder = db.ref("orders").push();
     newOrder.set({
       items: cart,
@@ -188,7 +244,6 @@
       time: new Date().toISOString()
     });
 
-    // Buat struk
     let struk = "☕ Numpang Ngopi CRB\n";
     struk += "=====================\n";
     Object.keys(cart).forEach(menu => {
@@ -200,14 +255,12 @@
     struk += `Total: Rp${total}\nBayar: Rp${bayar}\nKembali: Rp${bayar - total}\n`;
     struk += "=====================\nTerima kasih! #KopibeneranKopi";
 
-    // Kirim ke WhatsApp pelanggan
     let phone = prompt("Masukkan nomor WhatsApp pelanggan (contoh: 628123456789):");
     if (phone) {
       let url = `https://wa.me/${phone}?text=${encodeURIComponent(struk)}`;
       window.open(url, "_blank");
     }
 
-    // Reset keranjang
     cart = {};
     updateCart();
     document.getElementById("payment").value = "";
@@ -229,8 +282,6 @@
             li.innerHTML += `- ${m} ${it.qty}x<br>`;
           });
           li.innerHTML += `<b>Total: Rp${order.total}</b> `;
-        } else {
-          li.innerHTML = `<b>${order.menu}</b> x ${order.qty}`;
         }
         li.innerHTML += ` <span class="${order.status}">[${order.status}]</span>`;
         if (order.status === "pending") {
@@ -311,8 +362,6 @@
             li.innerHTML += `- ${m} ${it.qty}x<br>`;
           });
           li.innerHTML += `<b>Total: Rp${order.total}</b> `;
-        } else {
-          li.innerHTML = `${order.menu} x ${order.qty}`;
         }
         li.innerHTML += ` <span class="${order.status}">[${order.status}]</span>`;
         list.appendChild(li);
@@ -320,7 +369,7 @@
     });
   }
 
-  // ---------- Tambahkan Menu Default ----------
+  // ---------- Menu Default ----------
   const defaultMenus = {
     "kopi susu gula aren": { harga: 8000 },
     "kopi susu latte": { harga: 8000 },
