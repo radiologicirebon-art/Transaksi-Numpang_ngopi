@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
   <meta charset="UTF-8">
   <title>Numpang Ngopi CRB</title>
@@ -10,76 +10,42 @@
 
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 10px;
-      background: #f8f5f2;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #f5ebe0, #e9d5ca);
+      color: #3e2723;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
     }
-
-    h1 { 
-      color: #4e342e; 
-      text-align: center; 
-      font-size: 1.6rem;
-    }
-    h2 { 
-      color: #5d4037; 
-      border-bottom: 2px solid #d7ccc8; 
-      padding-bottom: 5px; 
-      font-size: 1.2rem;
-    }
-
+    h1 { color: #3e2723; text-align: center; font-size: 2rem; margin-bottom: 15px; }
+    h2 { color: #5d4037; border-left: 6px solid #d7ccc8; padding-left: 10px; font-size: 1.3rem; margin-bottom: 15px; }
     .hidden { display: none; }
 
     .card {
       background: #fff;
-      border-radius: 10px;
-      padding: 15px;
-      margin: 12px 0;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      border-radius: 15px;
+      padding: 20px;
+      margin: 15px 0;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
     }
-
     ul { list-style-type: none; padding: 0; }
-    li { 
-      margin: 8px 0; 
-      padding: 10px; 
-      border: 1px solid #ddd; 
-      border-radius: 8px; 
-      background: #fafafa; 
-      font-size: 0.95rem;
-    }
-
+    li { margin: 10px 0; padding: 12px 15px; border: 1px solid #eee; border-radius: 12px; background: #fafafa; }
+    input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 10px; font-size: 1rem; }
     button {
-      margin-top: 8px; 
-      padding: 10px 15px; 
-      border: none; 
-      border-radius: 6px; 
-      cursor: pointer; 
-      font-size: 1rem;
-      width: 100%;
+      margin-top: 8px; padding: 12px 18px; border: none; border-radius: 10px; cursor: pointer; 
+      font-size: 1rem; font-weight: bold; width: 100%;
     }
-
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin: 6px 0;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-
-    .done { color: green; font-weight: bold; }
-    .pending { color: red; font-weight: bold; }
-
     .btn-login { background: #6d4c41; color: white; }
+    .btn-add { background: #8d6e63; color: white; }
     .btn-done { background: #4caf50; color: white; }
     .btn-delete { background: #e53935; color: white; }
-    .btn-add { background: #8d6e63; color: white; }
-
-    /* Responsif */
-    @media (min-width: 768px) {
-      body { margin: 20px auto; max-width: 600px; }
-      button, input, select { width: auto; }
-    }
+    .done { color: #2e7d32; font-weight: bold; }
+    .pending { color: #d84315; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -88,9 +54,19 @@
   <!-- LOGIN -->
   <div id="loginSection" class="card">
     <h2>Login</h2>
-    <input type="text" id="username" placeholder="Username">
-    <input type="password" id="password" placeholder="Password">
+    <input type="text" id="username" placeholder="👤 Username">
+    <input type="password" id="password" placeholder="🔒 Password">
     <button class="btn-login" onclick="login()">Login</button>
+  </div>
+
+  <!-- NAVIGASI ROLE -->
+  <div id="navSection" class="hidden card">
+    <h2>Pindah Role</h2>
+    <button onclick="showSection('kasir')">Kasir</button>
+    <button onclick="showSection('barista')">Barista</button>
+    <button onclick="showSection('tv')">TV</button>
+    <button onclick="showSection('owner')">Owner</button>
+    <button onclick="logout()">🚪 Logout</button>
   </div>
 
   <!-- KASIR -->
@@ -98,14 +74,13 @@
     <h2>Kasir - Input Transaksi</h2>
     <select id="menuKasir"></select>
     <input type="number" id="qtyKasir" placeholder="Jumlah" min="1">
-    <button class="btn-add" onclick="addToCart()">Tambahkan ke Keranjang</button>
-    <h3>Keranjang</h3>
+    <button class="btn-add" onclick="addToCart()">➕ Tambahkan ke Keranjang</button>
+    <h3>🛒 Keranjang</h3>
     <ul id="cartList"></ul>
     <p><b>Total: Rp<span id="cartTotal">0</span></b></p>
     <p>Bayar: <input type="number" id="payment" placeholder="Jumlah bayar"></p>
     <p>Kembalian: Rp<span id="change">0</span></p>
-    <button class="btn-add" onclick="checkout()">Checkout & Kirim Struk</button>
-    <div id="kasirMsg"></div>
+    <button class="btn-add" onclick="checkout()">✅ Checkout & Kirim Struk</button>
   </div>
 
   <!-- BARISTA -->
@@ -117,19 +92,11 @@
   <!-- OWNER -->
   <div id="ownerSection" class="hidden card">
     <h2>Owner - Manajemen Menu</h2>
-    <input type="text" id="menuOwner" placeholder="Menu Baru">
-    <input type="number" id="hargaOwner" placeholder="Harga">
+    <input type="text" id="menuOwner" placeholder="☕ Menu Baru">
+    <input type="number" id="hargaOwner" placeholder="💰 Harga">
     <button class="btn-add" onclick="addMenu()">Tambah Menu</button>
-    <h3>Daftar Menu</h3>
+    <h3>📋 Daftar Menu</h3>
     <ul id="menuList"></ul>
-
-    <h3>Laporan Harian</h3>
-    <button onclick="laporanHarian()">Tarik Laporan Harian</button>
-    <pre id="laporanHarian"></pre>
-
-    <h3>Laporan Bulanan</h3>
-    <button onclick="laporanBulanan()">Tarik Laporan Bulanan</button>
-    <pre id="laporanBulanan"></pre>
   </div>
 
   <!-- TV ANTRIAN -->
@@ -139,10 +106,8 @@
   </div>
 
 <script>
-  // ---------- Firebase Config ----------
-  const firebaseConfig = {
-    databaseURL: "https://depelop-nnc-default-rtdb.firebaseio.com/"
-  };
+  // ---------- Firebase ----------
+  const firebaseConfig = { databaseURL: "https://depelop-nnc-default-rtdb.firebaseio.com/" };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
@@ -150,11 +115,12 @@
   function login() {
     let user = document.getElementById("username").value;
     let pass = document.getElementById("password").value;
-
     db.ref("users/" + user).once("value").then(snapshot => {
       let data = snapshot.val();
       if (data && data.password === pass) {
         sessionStorage.setItem("role", data.role);
+        document.getElementById("loginSection").classList.add("hidden");
+        document.getElementById("navSection").classList.remove("hidden");
         showSection(data.role);
         if (data.role === "kasir") loadMenus();
         if (data.role === "owner") loadMenusOwner();
@@ -164,21 +130,28 @@
     });
   }
 
+  function logout() {
+    sessionStorage.clear();
+    location.reload();
+  }
+
+  // ---------- Navigasi Role ----------
+  function hideAll() {
+    ["kasirSection","baristaSection","ownerSection","tvSection"].forEach(id => {
+      document.getElementById(id).classList.add("hidden");
+    });
+  }
+
   function showSection(role) {
-    document.getElementById("loginSection").classList.add("hidden");
-    if (role === "kasir") document.getElementById("kasirSection").classList.remove("hidden");
-    if (role === "barista") {
-      document.getElementById("baristaSection").classList.remove("hidden");
-      listenOrders();
-    }
-    if (role === "owner") document.getElementById("ownerSection").classList.remove("hidden");
-    if (role === "tv") {
-      document.getElementById("tvSection").classList.remove("hidden");
-      listenTV();
-    }
+    hideAll();
+    if (role === "kasir") { document.getElementById("kasirSection").classList.remove("hidden"); loadMenus(); }
+    if (role === "barista") { document.getElementById("baristaSection").classList.remove("hidden"); listenOrders(); }
+    if (role === "owner") { document.getElementById("ownerSection").classList.remove("hidden"); loadMenusOwner(); }
+    if (role === "tv") { document.getElementById("tvSection").classList.remove("hidden"); listenTV(); }
   }
 
   // ---------- Kasir ----------
+  let cart = {}, total = 0;
   function loadMenus() {
     db.ref("menus").once("value").then(snapshot => {
       let menuKasir = document.getElementById("menuKasir");
@@ -191,15 +164,10 @@
       });
     });
   }
-
-  let cart = {};
-  let total = 0;
-
   function addToCart() {
     let menu = document.getElementById("menuKasir").value;
     let qty = parseInt(document.getElementById("qtyKasir").value);
     if (!qty || qty <= 0) return alert("Jumlah tidak valid!");
-
     db.ref("menus/" + menu).once("value").then(snapshot => {
       let harga = snapshot.val().harga;
       if (!cart[menu]) cart[menu] = { qty: 0, harga: harga };
@@ -207,63 +175,29 @@
       updateCart();
     });
   }
-
   function updateCart() {
     let cartList = document.getElementById("cartList");
-    cartList.innerHTML = "";
-    total = 0;
-
+    cartList.innerHTML = ""; total = 0;
     Object.keys(cart).forEach(menu => {
       let item = cart[menu];
       let subtotal = item.qty * item.harga;
       total += subtotal;
-
       let li = document.createElement("li");
       li.textContent = `${menu} ${item.qty} x ${item.harga} = Rp${subtotal}`;
       cartList.appendChild(li);
     });
-
     document.getElementById("cartTotal").innerText = total;
-
     let bayar = parseInt(document.getElementById("payment").value) || 0;
     document.getElementById("change").innerText = bayar - total >= 0 ? (bayar - total) : 0;
   }
-
   document.getElementById("payment").addEventListener("input", updateCart);
-
   function checkout() {
     if (total <= 0) return alert("Keranjang kosong!");
     let bayar = parseInt(document.getElementById("payment").value);
     if (!bayar || bayar < total) return alert("Pembayaran kurang!");
-
     let newOrder = db.ref("orders").push();
-    newOrder.set({
-      items: cart,
-      total: total,
-      status: "pending",
-      time: new Date().toISOString()
-    });
-
-    let struk = "☕ Numpang Ngopi CRB\n";
-    struk += "=====================\n";
-    Object.keys(cart).forEach(menu => {
-      let item = cart[menu];
-      let subtotal = item.qty * item.harga;
-      struk += `${menu} ${item.qty} x ${item.harga} = Rp${subtotal}\n`;
-    });
-    struk += "---------------------\n";
-    struk += `Total: Rp${total}\nBayar: Rp${bayar}\nKembali: Rp${bayar - total}\n`;
-    struk += "=====================\nTerima kasih! #KopibeneranKopi";
-
-    let phone = prompt("Masukkan nomor WhatsApp pelanggan (contoh: 628123456789):");
-    if (phone) {
-      let url = `https://wa.me/${phone}?text=${encodeURIComponent(struk)}`;
-      window.open(url, "_blank");
-    }
-
-    cart = {};
-    updateCart();
-    document.getElementById("payment").value = "";
+    newOrder.set({ items: cart, total: total, status: "pending", time: new Date().toISOString() });
+    cart = {}; updateCart(); document.getElementById("payment").value = "";
     alert("Pesanan dikirim ke Barista!");
   }
 
@@ -291,20 +225,15 @@
       });
     });
   }
-
-  function doneOrder(id) {
-    db.ref("orders/" + id).update({ status: "done" });
-  }
+  function doneOrder(id) { db.ref("orders/" + id).update({ status: "done" }); }
 
   // ---------- Owner ----------
   function addMenu() {
     let menu = document.getElementById("menuOwner").value;
     let harga = document.getElementById("hargaOwner").value;
     db.ref("menus/" + menu).set({ harga: parseInt(harga) });
-    loadMenusOwner();
-    alert("Menu ditambahkan!");
+    loadMenusOwner(); alert("Menu ditambahkan!");
   }
-
   function loadMenusOwner() {
     db.ref("menus").once("value").then(snapshot => {
       let menuList = document.getElementById("menuList");
@@ -317,37 +246,9 @@
       });
     });
   }
+  function deleteMenu(menu) { db.ref("menus/" + menu).remove(); loadMenusOwner(); }
 
-  function deleteMenu(menu) {
-    db.ref("menus/" + menu).remove();
-    loadMenusOwner();
-  }
-
-  function laporanHarian() {
-    let today = new Date().toISOString().split("T")[0];
-    db.ref("orders").once("value").then(snapshot => {
-      let hasil = [];
-      snapshot.forEach(child => {
-        let o = child.val();
-        if (o.time.startsWith(today)) hasil.push(o);
-      });
-      document.getElementById("laporanHarian").textContent = JSON.stringify(hasil, null, 2);
-    });
-  }
-
-  function laporanBulanan() {
-    let ym = new Date().toISOString().slice(0,7);
-    db.ref("orders").once("value").then(snapshot => {
-      let hasil = [];
-      snapshot.forEach(child => {
-        let o = child.val();
-        if (o.time.startsWith(ym)) hasil.push(o);
-      });
-      document.getElementById("laporanBulanan").textContent = JSON.stringify(hasil, null, 2);
-    });
-  }
-
-  // ---------- TV Antrian ----------
+  // ---------- TV ----------
   function listenTV() {
     db.ref("orders").on("value", snapshot => {
       let list = document.getElementById("tvOrders");
@@ -372,23 +273,16 @@
   // ---------- Menu Default ----------
   const defaultMenus = {
     "kopi susu gula aren": { harga: 8000 },
-    "kopi susu latte": { harga: 8000 },
     "americano": { harga: 6000 },
-    "capuchino": { harga: 10000 },
-    "taro coffe": { harga: 10000 },
+    "cappuccino": { harga: 10000 },
     "taro latte": { harga: 8000 },
-    "coklat latte": { harga: 8000 },
+    "choco latte": { harga: 8000 },
     "redvelvet latte": { harga: 8000 },
-    "Creamy": { harga: 1000 },
-    "Aren": { harga: 1000 },
-    "Es Batu": { harga: 1000 }
+    "extra shot": { harga: 2000 },
+    "gula aren": { harga: 1000 },
+    "ice": { harga: 1000 }
   };
-
-  db.ref("menus").once("value").then(snapshot => {
-    if (!snapshot.exists()) {
-      db.ref("menus").set(defaultMenus);
-    }
-  });
+  db.ref("menus").once("value").then(snapshot => { if (!snapshot.exists()) db.ref("menus").set(defaultMenus); });
 </script>
 </body>
 </html>
