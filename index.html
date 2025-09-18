@@ -7,21 +7,39 @@
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Chart.js -->
 
   <style>
-    body { font-family: 'Segoe UI', sans-serif; margin: 0; background: linear-gradient(135deg, #f5ebe0, #e9d5ca); color: #3e2723;
-      min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #f5ebe0, #e9d5ca);
+      color: #3e2723;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
     h1 { color: #3e2723; text-align: center; font-size: 2rem; margin-bottom: 15px; }
     h2 { color: #5d4037; border-left: 6px solid #d7ccc8; padding-left: 10px; font-size: 1.3rem; margin-bottom: 15px; }
     .hidden { display: none; }
-    .card { background: #fff; border-radius: 15px; padding: 20px; margin: 15px 0; width: 100%; max-width: 600px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.1); }
+
+    .card {
+      background: #fff;
+      border-radius: 15px;
+      padding: 20px;
+      margin: 15px 0;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    }
     ul { list-style-type: none; padding: 0; }
     li { margin: 10px 0; padding: 12px 15px; border: 1px solid #eee; border-radius: 12px; background: #fafafa; }
     input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 10px; font-size: 1rem; }
-    button { margin-top: 8px; padding: 12px 18px; border: none; border-radius: 10px; cursor: pointer;
-      font-size: 1rem; font-weight: bold; width: 100%; }
+    button {
+      margin-top: 8px; padding: 12px 18px; border: none; border-radius: 10px; cursor: pointer; 
+      font-size: 1rem; font-weight: bold; width: 100%;
+    }
     .btn-login { background: #6d4c41; color: white; }
     .btn-add { background: #8d6e63; color: white; }
     .btn-done { background: #4caf50; color: white; }
@@ -60,7 +78,7 @@
     <h3>🛒 Keranjang</h3>
     <ul id="cartList"></ul>
     <p><b>Total: Rp<span id="cartTotal">0</span></b></p>
-    <p>Bayar: <input type="number" id="payment" placeholder="Jumlah bayar" oninput="updateChange()"></p>
+    <p>Bayar: <input type="number" id="payment" placeholder="Jumlah bayar"></p>
     <p>Kembalian: Rp<span id="change">0</span></p>
     <button class="btn-add" onclick="checkout()">✅ Checkout & Kirim Struk</button>
   </div>
@@ -79,16 +97,6 @@
     <button class="btn-add" onclick="addMenu()">Tambah Menu</button>
     <h3>📋 Daftar Menu</h3>
     <ul id="menuList"></ul>
-
-    <h3>📊 Dashboard Owner</h3>
-    <canvas id="chartOrdersHour" height="150"></canvas>
-    <canvas id="chartOrdersDay" height="150"></canvas>
-
-    <!-- 🎯 Target Harian -->
-    <h3>🎯 Target Harian</h3>
-    <input type="number" id="dailyTarget" placeholder="Target cup/hari" min="1">
-    <button class="btn-add" onclick="updateTarget()">Update Target</button>
-    <p id="targetInfo">✅ Pesanan selesai: 0 / 30 (0%)</p>
   </div>
 
   <!-- TV ANTRIAN -->
@@ -96,9 +104,6 @@
     <h2 style="text-align:center;">📺 TV Antrian</h2>
     <ul id="tvOrders"></ul>
   </div>
-
-  <!-- Suara Notifikasi -->
-  <audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
 <script>
   // ---------- Firebase ----------
@@ -113,18 +118,20 @@
     db.ref("users/" + user).once("value").then(snapshot => {
       let data = snapshot.val();
       if (data && data.password === pass) {
-        sessionStorage.setItem("role", data.role);
+        localStorage.setItem("role", data.role); // simpan role terakhir
         document.getElementById("loginSection").classList.add("hidden");
         document.getElementById("navSection").classList.remove("hidden");
         showSection(data.role);
-        if (data.role === "kasir") loadMenus();
-        if (data.role === "owner") { loadMenusOwner(); loadDashboard(); }
-        if (data.role === "kasir" || data.role === "tv") listenNotifications();
-      } else { alert("Login gagal!"); }
+      } else {
+        alert("Login gagal!");
+      }
     });
   }
 
-  function logout() { sessionStorage.clear(); location.reload(); }
+  function logout() {
+    localStorage.removeItem("role");
+    location.reload();
+  }
 
   // ---------- Navigasi Role ----------
   function hideAll() {
@@ -132,153 +139,143 @@
       document.getElementById(id).classList.add("hidden");
     });
   }
+
   function showSection(role) {
     hideAll();
     if (role === "kasir") { document.getElementById("kasirSection").classList.remove("hidden"); loadMenus(); }
     if (role === "barista") { document.getElementById("baristaSection").classList.remove("hidden"); listenOrders(); }
-    if (role === "owner") { document.getElementById("ownerSection").classList.remove("hidden"); loadMenusOwner(); loadDashboard(); checkDailyReset(); }
+    if (role === "owner") { document.getElementById("ownerSection").classList.remove("hidden"); loadMenusOwner(); }
     if (role === "tv") { document.getElementById("tvSection").classList.remove("hidden"); listenTV(); }
+    localStorage.setItem("role", role); // update role saat pindah
   }
+
+  // ---------- Auto-login ----------
+  window.onload = () => {
+    let lastRole = localStorage.getItem("role");
+    if (lastRole) {
+      document.getElementById("loginSection").classList.add("hidden");
+      document.getElementById("navSection").classList.remove("hidden");
+      showSection(lastRole);
+    }
+  };
 
   // ---------- Kasir ----------
   let cart = {}, total = 0;
-
   function loadMenus() {
     db.ref("menus").once("value").then(snapshot => {
       let menuKasir = document.getElementById("menuKasir");
       menuKasir.innerHTML = "";
-      snapshot.forEach(m => {
+      snapshot.forEach(child => {
         let opt = document.createElement("option");
-        opt.value = m.key;
-        opt.textContent = `${m.key} - Rp${m.val().harga}`;
+        opt.value = child.key;
+        opt.textContent = `${child.key} - Rp${child.val().harga}`;
         menuKasir.appendChild(opt);
       });
     });
   }
-
   function addToCart() {
     let menu = document.getElementById("menuKasir").value;
     let qty = parseInt(document.getElementById("qtyKasir").value);
     if (!qty || qty <= 0) return alert("Jumlah tidak valid!");
-
     db.ref("menus/" + menu).once("value").then(snapshot => {
       let harga = snapshot.val().harga;
       if (!cart[menu]) cart[menu] = { qty: 0, harga: harga };
       cart[menu].qty += qty;
-      total += harga * qty;
       updateCart();
     });
   }
-
   function updateCart() {
-    let list = document.getElementById("cartList");
-    list.innerHTML = "";
-    for (let menu in cart) {
+    let cartList = document.getElementById("cartList");
+    cartList.innerHTML = ""; total = 0;
+    Object.keys(cart).forEach(menu => {
+      let item = cart[menu];
+      let subtotal = item.qty * item.harga;
+      total += subtotal;
       let li = document.createElement("li");
-      li.textContent = `${menu} x${cart[menu].qty} = Rp${cart[menu].qty * cart[menu].harga}`;
-      list.appendChild(li);
-    }
-    document.getElementById("cartTotal").textContent = total;
-    updateChange();
-  }
-
-  function updateChange() {
-    let bayar = parseInt(document.getElementById("payment").value) || 0;
-    let kembalian = bayar - total;
-    document.getElementById("change").textContent = kembalian >= 0 ? kembalian : 0;
-  }
-
-  function checkout() {
-    if (total === 0) return alert("Keranjang kosong!");
-
-    let bayar = parseInt(document.getElementById("payment").value) || 0;
-    if (bayar < total) return alert("Uang bayar kurang!");
-
-    let orderId = Date.now();
-    db.ref("orders/" + orderId).set({
-      items: cart,
-      total: total,
-      status: "pending",
-      waktu: new Date().toISOString()
+      li.textContent = `${menu} ${item.qty} x ${item.harga} = Rp${subtotal}`;
+      cartList.appendChild(li);
     });
-
-    alert("✅ Pesanan dikirim ke Barista");
-    cart = {}; total = 0;
-    document.getElementById("cartList").innerHTML = "";
-    document.getElementById("cartTotal").textContent = 0;
-    document.getElementById("payment").value = "";
-    document.getElementById("change").textContent = 0;
+    document.getElementById("cartTotal").innerText = total;
+    let bayar = parseInt(document.getElementById("payment").value) || 0;
+    document.getElementById("change").innerText = bayar - total >= 0 ? (bayar - total) : 0;
+  }
+  document.getElementById("payment").addEventListener("input", updateCart);
+  function checkout() {
+    if (total <= 0) return alert("Keranjang kosong!");
+    let bayar = parseInt(document.getElementById("payment").value);
+    if (!bayar || bayar < total) return alert("Pembayaran kurang!");
+    let newOrder = db.ref("orders").push();
+    newOrder.set({ items: cart, total: total, status: "pending", time: new Date().toISOString() });
+    cart = {}; updateCart(); document.getElementById("payment").value = "";
+    alert("Pesanan dikirim ke Barista!");
   }
 
   // ---------- Barista ----------
-  function listenOrders() { /* sama seperti sebelumnya */ }
+  function listenOrders() {
+    db.ref("orders").on("value", snapshot => {
+      let list = document.getElementById("orderList");
+      list.innerHTML = "";
+      snapshot.forEach(child => {
+        let order = child.val();
+        let li = document.createElement("li");
+        if (order.items) {
+          li.innerHTML = `<b>Pesanan</b><br>`;
+          Object.keys(order.items).forEach(m => {
+            let it = order.items[m];
+            li.innerHTML += `- ${m} ${it.qty}x<br>`;
+          });
+          li.innerHTML += `<b>Total: Rp${order.total}</b> `;
+        }
+        li.innerHTML += ` <span class="${order.status}">[${order.status}]</span>`;
+        if (order.status === "pending") {
+          li.innerHTML += ` <button class="btn-done" onclick="doneOrder('${child.key}')">Selesai</button>`;
+        }
+        list.appendChild(li);
+      });
+    });
+  }
   function doneOrder(id) { db.ref("orders/" + id).update({ status: "done" }); }
 
-  // ---------- Owner Menu ----------
-  function addMenu() { /* sama seperti sebelumnya */ }
-  function loadMenusOwner() { /* sama seperti sebelumnya */ }
+  // ---------- Owner ----------
+  function addMenu() {
+    let menu = document.getElementById("menuOwner").value;
+    let harga = document.getElementById("hargaOwner").value;
+    db.ref("menus/" + menu).set({ harga: parseInt(harga) });
+    loadMenusOwner(); alert("Menu ditambahkan!");
+  }
+  function loadMenusOwner() {
+    db.ref("menus").once("value").then(snapshot => {
+      let menuList = document.getElementById("menuList");
+      menuList.innerHTML = "";
+      snapshot.forEach(child => {
+        let li = document.createElement("li");
+        li.innerHTML = `${child.key} - Rp${child.val().harga}
+          <button class="btn-delete" onclick="deleteMenu('${child.key}')">Hapus</button>`;
+        menuList.appendChild(li);
+      });
+    });
+  }
   function deleteMenu(menu) { db.ref("menus/" + menu).remove(); loadMenusOwner(); }
 
-  // ---------- Dashboard Owner + Target Harian ----------
-  const targetRef = db.ref("settings/dailyTarget");
-  const resetRef = db.ref("settings/lastResetDate");
-  const reportsRef = db.ref("reports");
-
-  function checkDailyReset() {
-    let today = new Date().toISOString().split("T")[0];
-    resetRef.once("value").then(snapshot => {
-      let lastReset = snapshot.val();
-      if (lastReset && lastReset !== today) {
-        Promise.all([targetRef.once("value"), db.ref("orders").once("value")]).then(([targetSnap, ordersSnap]) => {
-          let target = targetSnap.val() || 30;
-          let selesai = 0;
-          ordersSnap.forEach(o => { if (o.val().status === "done") selesai++; });
-          reportsRef.child(lastReset).set({ target: target, selesai: selesai });
-        });
-      }
-      if (lastReset !== today) {
-        targetRef.set(30); resetRef.set(today);
-        document.getElementById("dailyTarget").value = 30;
-        document.getElementById("targetInfo").innerText = `🎯 Target reset otomatis ke 30 cup (tanggal ${today})`;
-      }
-    });
-  }
-
-  targetRef.on("value", snapshot => {
-    if (snapshot.exists()) {
-      document.getElementById("dailyTarget").value = snapshot.val();
-      calculatePercentage();
-    } else { targetRef.set(30); document.getElementById("dailyTarget").value = 30; }
-  });
-
-  function updateTarget() {
-    let newTarget = parseInt(document.getElementById("dailyTarget").value);
-    if (!newTarget || newTarget <= 0) return alert("Target tidak valid!");
-    targetRef.set(newTarget); alert("Target harian diperbarui ✅");
-  }
-
-  function calculatePercentage() {
-    Promise.all([db.ref("orders").once("value"), targetRef.once("value")]).then(([ordersSnap, targetSnap]) => {
-      let target = targetSnap.val() || 30; let selesai = 0;
-      ordersSnap.forEach(o => { if (o.val().status === "done") selesai++; });
-      let persen = ((selesai / target) * 100).toFixed(1);
-      document.getElementById("targetInfo").innerText = `✅ Pesanan selesai: ${selesai} / ${target} (${persen}%)`;
-    });
-  }
-
-  function loadDashboard() { /* sama seperti sebelumnya */ }
-
   // ---------- TV ----------
-  function listenTV() { /* sama seperti sebelumnya */ }
-
-  // ---------- Notifikasi ----------
-  function listenNotifications() {
-    db.ref("orders").on("child_changed", snapshot => {
-      let order = snapshot.val();
-      if (order.status === "done") {
-        alert("✅ Pesanan Selesai!\nTotal: Rp" + order.total);
-        document.getElementById("notifSound").play().catch(e => console.log("Autoplay dicegah:", e));
-      }
+  function listenTV() {
+    db.ref("orders").on("value", snapshot => {
+      let list = document.getElementById("tvOrders");
+      list.innerHTML = "";
+      snapshot.forEach(child => {
+        let order = child.val();
+        let li = document.createElement("li");
+        if (order.items) {
+          li.innerHTML = `<b>Pesanan</b><br>`;
+          Object.keys(order.items).forEach(m => {
+            let it = order.items[m];
+            li.innerHTML += `- ${m} ${it.qty}x<br>`;
+          });
+          li.innerHTML += `<b>Total: Rp${order.total}</b> `;
+        }
+        li.innerHTML += ` <span class="${order.status}">[${order.status}]</span>`;
+        list.appendChild(li);
+      });
     });
   }
 
@@ -294,9 +291,7 @@
     "gula aren": { harga: 1000 },
     "ice": { harga: 1000 }
   };
-  db.ref("menus").once("value").then(snapshot => {
-    if (!snapshot.exists()) db.ref("menus").set(defaultMenus);
-  });
+  db.ref("menus").once("value").then(snapshot => { if (!snapshot.exists()) db.ref("menus").set(defaultMenus); });
 </script>
 </body>
 </html>
