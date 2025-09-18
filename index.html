@@ -105,6 +105,9 @@
     <ul id="tvOrders"></ul>
   </div>
 
+  <!-- Suara Notifikasi -->
+  <audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+
 <script>
   // ---------- Firebase ----------
   const firebaseConfig = { databaseURL: "https://depelop-nnc-default-rtdb.firebaseio.com/" };
@@ -124,6 +127,7 @@
         showSection(data.role);
         if (data.role === "kasir") loadMenus();
         if (data.role === "owner") loadMenusOwner();
+        if (data.role === "kasir" || data.role === "tv") listenNotifications(); // aktifkan notifikasi
       } else {
         alert("Login gagal!");
       }
@@ -267,6 +271,19 @@
         li.innerHTML += ` <span class="${order.status}">[${order.status}]</span>`;
         list.appendChild(li);
       });
+    });
+  }
+
+  // ---------- Notifikasi ----------
+  function listenNotifications() {
+    db.ref("orders").on("child_changed", snapshot => {
+      let order = snapshot.val();
+      if (order.status === "done") {
+        alert("✅ Pesanan Selesai!\nTotal: Rp" + order.total);
+        document.getElementById("notifSound").play().catch(e => {
+          console.log("Autoplay dicegah:", e);
+        });
+      }
     });
   }
 
