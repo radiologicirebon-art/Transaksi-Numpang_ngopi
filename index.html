@@ -19,9 +19,10 @@
         ☕ Numpang Ngopi
       </div>
       <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-        <button onclick="showSection('kasir')" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/20 transition"><span>🛒</span> <span>Kasir</span></button>
-        <button onclick="showSection('antrian')" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/20 transition"><span>📋</span> <span>Antrian</span></button>
-        <button onclick="showSection('laporan')" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/20 transition"><span>📊</span> <span>Laporan</span></button>
+        <button onclick="showSection('kasir')" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/20"><span>🛒</span>Kasir</button>
+        <button onclick="showSection('antrian')" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/20"><span>📋</span>Antrian</button>
+        <button onclick="showSection('laporan')" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/20"><span>📊</span>Laporan</button>
+        <button onclick="showSection('adminMenu')" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/20"><span>⚙️</span>Admin Menu</button>
       </nav>
       <div class="p-4 text-sm text-center border-t border-white/20">
         &copy; 2025 Numpang Ngopi.crb
@@ -43,7 +44,6 @@
         <!-- KASIR -->
         <section id="kasir" class="hidden">
           <h2 class="text-2xl font-bold mb-4">Kasir - Input Transaksi</h2>
-
           <div class="bg-white rounded-xl shadow p-4">
             <div class="grid md:grid-cols-2 gap-4">
               <div>
@@ -57,7 +57,6 @@
             </div>
             <button onclick="addToCart()" class="mt-4 w-full bg-[#1d899b] text-white px-4 py-2 rounded-xl hover:bg-[#15707e]">Tambahkan ke Keranjang</button>
           </div>
-
           <div class="mt-6 bg-white rounded-xl shadow p-4">
             <h3 class="text-xl font-bold mb-2">Keranjang</h3>
             <ul id="cartList" class="space-y-2"></ul>
@@ -87,12 +86,28 @@
           </div>
         </section>
 
+        <!-- ADMIN MENU -->
+        <section id="adminMenu" class="hidden">
+          <h2 class="text-2xl font-bold mb-4">Admin Menu</h2>
+          <div class="bg-white p-4 rounded-xl shadow space-y-4">
+            <div class="grid md:grid-cols-3 gap-4">
+              <input id="menuKategori" class="p-2 border rounded" placeholder="Kategori (Coffee/Non Coffee)">
+              <input id="menuNama" class="p-2 border rounded" placeholder="Nama Menu">
+              <input id="menuHarga" type="number" class="p-2 border rounded" placeholder="Harga">
+            </div>
+            <button onclick="tambahMenu()" class="bg-[#1d899b] text-white px-4 py-2 rounded-xl hover:bg-[#15707e]">Tambah Menu</button>
+          </div>
+          <div class="mt-6 bg-white p-4 rounded-xl shadow">
+            <h3 class="text-xl font-bold mb-3">Daftar Menu</h3>
+            <div id="menuList" class="space-y-2"></div>
+          </div>
+        </section>
+
       </main>
     </div>
   </div>
 
 <script>
-  // --- Firebase ---
   const firebaseConfig = {
     apiKey: "AIzaSyDk9w-nuV6ls0lmjZyQYBqKpcU1y7fAeME",
     authDomain: "numpang-ngopi-crb-2c1b7.firebaseapp.com",
@@ -110,18 +125,22 @@
 
   const menuKasir = document.getElementById("menuKasir");
 
-  // --- Ambil menu dari Firebase ---
-  db.ref("menu").once("value").then(snap => {
-    snap.forEach(cat => {
-      cat.val().forEach(item => {
-        const opt = document.createElement("option");
-        opt.value = item.name;
-        opt.textContent = `${item.name} - Rp${item.price}`;
-        opt.dataset.price = item.price;
-        menuKasir.appendChild(opt);
+  // --- Ambil menu untuk dropdown kasir ---
+  function loadMenuKasir() {
+    menuKasir.innerHTML = "";
+    db.ref("menu").once("value").then(snap => {
+      snap.forEach(cat => {
+        cat.val().forEach(item => {
+          const opt = document.createElement("option");
+          opt.value = item.name;
+          opt.textContent = `${item.name} - Rp${item.price}`;
+          opt.dataset.price = item.price;
+          menuKasir.appendChild(opt);
+        });
       });
     });
-  });
+  }
+  loadMenuKasir();
 
   function addToCart() {
     const menu = menuKasir.value;
@@ -230,10 +249,77 @@
   }
   filterDate.addEventListener("change", loadReport);
 
+  // --- Admin Menu ---
+  function loadMenuList() {
+    const list = document.getElementById("menuList");
+    list.innerHTML = "";
+    db.ref("menu").once("value").then(snap => {
+      snap.forEach(cat => {
+        const catName = cat.key;
+        const catDiv = document.createElement("div");
+        catDiv.innerHTML = `<h4 class="font-bold">${catName}</h4>`;
+        cat.val().forEach((item, idx) => {
+          const row = document.createElement("div");
+          row.className = "flex justify-between items-center bg-gray-50 p-2 rounded mb-1";
+          row.innerHTML = `
+            <span>${item.name} - Rp${item.price}</span>
+            <div class="space-x-2">
+              <button onclick="ubahHarga('${catName}',${idx})" class="bg-yellow-500 text-white px-2 py-1 rounded">Ubah</button>
+              <button onclick="hapusMenu('${catName}',${idx})" class="bg-red-500 text-white px-2 py-1 rounded">Hapus</button>
+            </div>`;
+          catDiv.appendChild(row);
+        });
+        list.appendChild(catDiv);
+      });
+    });
+  }
+
+  function tambahMenu() {
+    const kat = document.getElementById("menuKategori").value.trim();
+    const nama = document.getElementById("menuNama").value.trim();
+    const harga = parseInt(document.getElementById("menuHarga").value);
+    if (!kat || !nama || !harga) return alert("Lengkapi semua data!");
+    db.ref("menu/"+kat).once("value").then(snap=>{
+      let arr = snap.val() || [];
+      arr.push({name:nama, price:harga});
+      db.ref("menu/"+kat).set(arr).then(()=>{
+        alert("Menu ditambahkan!");
+        document.getElementById("menuNama").value="";
+        document.getElementById("menuHarga").value="";
+        loadMenuKasir();
+        loadMenuList();
+      });
+    });
+  }
+
+  function hapusMenu(kat,idx){
+    db.ref("menu/"+kat).once("value").then(snap=>{
+      let arr = snap.val()||[];
+      arr.splice(idx,1);
+      db.ref("menu/"+kat).set(arr).then(()=>{
+        alert("Menu dihapus");
+        loadMenuKasir();
+        loadMenuList();
+      });
+    });
+  }
+
+  function ubahHarga(kat,idx){
+    const newPrice = prompt("Masukkan harga baru:");
+    if(!newPrice) return;
+    db.ref("menu/"+kat+"/"+idx+"/price").set(parseInt(newPrice)).then(()=>{
+      alert("Harga diperbarui");
+      loadMenuKasir();
+      loadMenuList();
+    });
+  }
+
+  // showSection
   function showSection(id) {
     document.querySelectorAll("main section").forEach(s => s.classList.add("hidden"));
     document.getElementById(id).classList.remove("hidden");
     if (id === 'laporan') loadReport();
+    if (id === 'adminMenu') loadMenuList();
   }
   showSection('kasir');
 
