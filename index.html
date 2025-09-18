@@ -106,6 +106,32 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
+  // ---------- Menu Default ----------
+  const defaultMenus = {
+    "kopi susu gula aren": { harga: 8000 },
+    "americano": { harga: 6000 },
+    "cappuccino": { harga: 10000 },
+    "taro latte": { harga: 8000 },
+    "choco latte": { harga: 8000 },
+    "redvelvet latte": { harga: 8000 },
+    "espresso": { harga: 7000 },
+    "cafe latte": { harga: 9000 },
+    "mokachino": { harga: 10000 },
+    "vietnam drip": { harga: 9000 },
+    "extra shot": { harga: 2000 },
+    "gula aren": { harga: 1000 },
+    "ice": { harga: 1000 },
+    "hot": { harga: 0 }
+  };
+
+  // Pastikan menu default terset sekali
+  db.ref("menus").once("value").then(snapshot => {
+    if (!snapshot.exists()) {
+      db.ref("menus").set(defaultMenus);
+      console.log("✅ Default menu dimasukkan ke database.");
+    }
+  });
+
   // ---------- Login ----------
   function login() {
     let user = document.getElementById("username").value;
@@ -333,35 +359,7 @@
         document.getElementById("notifSound").play().catch(e => console.log("Autoplay dicegah:", e));
       }
     });
-<script>
-  // ---------- Firebase ----------
-  const firebaseConfig = { databaseURL: "https://depelop-nnc-default-rtdb.firebaseio.com/" };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-
-  // ---------- Menu Default ----------
-  const defaultMenus = {
-    "kopi susu gula aren": { harga: 8000 },
-    "americano": { harga: 6000 },
-    "cappuccino": { harga: 10000 },
-    "taro latte": { harga: 8000 },
-    "choco latte": { harga: 8000 },
-    "redvelvet latte": { harga: 8000 },
-    "espresso": { harga: 7000 },
-    "cafe latte": { harga: 9000 },
-    "mokachino": { harga: 10000 },
-    "vietnam drip": { harga: 9000 },
-    "extra shot": { harga: 2000 },
-    "gula aren": { harga: 1000 },
-    "ice": { harga: 1000 },
-    "hot": { harga: 0 }
-  };
-
-  // Pastikan menu default terset sekali
-  db.ref("menus").once("value").then(snapshot => {
-    if (!snapshot.exists()) {
-      db.ref("menus").set(defaultMenus);
-      console.log("✅ Default menu dimasukkan ke database.");
-    }
-  });
+  }
 </script>
+</body>
+</html>
