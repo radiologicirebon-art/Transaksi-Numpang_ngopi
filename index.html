@@ -1,224 +1,331 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Numpang Ngopi - Kasir</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <!-- Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 </head>
 <body class="bg-gray-100">
+  <div class="flex min-h-screen">
 
-<div class="flex min-h-screen">
-
-  <!-- Sidebar -->
-  <aside class="w-64 bg-teal-700 text-white flex flex-col">
-    <div class="text-2xl font-bold p-4 border-b border-teal-600">☕ Numpang Ngopi</div>
-    <nav class="flex-1 p-2 space-y-2">
-      <button onclick="showPage('kasir')" class="block w-full text-left px-4 py-2 hover:bg-teal-600 rounded">Kasir</button>
-      <button onclick="showPage('antrian')" class="block w-full text-left px-4 py-2 hover:bg-teal-600 rounded">Antrian</button>
-      <button onclick="showPage('laporan')" class="block w-full text-left px-4 py-2 hover:bg-teal-600 rounded">Laporan</button>
-      <button onclick="showPage('admin')" class="block w-full text-left px-4 py-2 hover:bg-teal-600 rounded">Admin Menu</button>
-    </nav>
-  </aside>
-
-  <!-- Konten Utama -->
-  <main class="flex-1 p-6 overflow-y-auto">
-
-    <!-- KASIR -->
-    <section id="kasirPage" class="space-y-4">
-      <h1 class="text-2xl font-bold">Kasir</h1>
-      <div id="menuList" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
-      <div class="bg-white p-4 rounded shadow">
-        <h2 class="font-bold mb-2">Keranjang</h2>
-        <ul id="cartList" class="mb-2"></ul>
-        <p>Total: Rp<span id="total">0</span></p>
-        <input id="payment" type="number" placeholder="Jumlah bayar" class="border p-2 rounded w-full mt-2">
-        <input id="waNumber" type="text" placeholder="08123xxxxxxx" class="border p-2 rounded w-full mt-2">
-        <button onclick="checkout()" class="bg-teal-600 text-white px-4 py-2 rounded w-full mt-2">Checkout</button>
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 w-64 bg-[#1d899b] text-white flex flex-col z-20 transform -translate-x-full md:translate-x-0 transition-transform duration-200">
+      <div class="p-4 text-2xl font-bold text-center border-b border-white/20">
+        ☕ Numpang Ngopi
       </div>
-    </section>
-
-    <!-- ANTRIAN -->
-    <section id="antrianPage" class="hidden space-y-4">
-      <h1 class="text-2xl font-bold">Antrian</h1>
-      <div id="queueList" class="space-y-2"></div>
-    </section>
-
-    <!-- LAPORAN -->
-    <section id="laporanPage" class="hidden space-y-4">
-      <h1 class="text-2xl font-bold">Laporan</h1>
-      <input type="date" id="filterTanggal" class="border p-2 rounded">
-      <div id="reportList" class="space-y-2"></div>
-    </section>
-
-    <!-- ADMIN MENU -->
-    <section id="adminPage" class="hidden space-y-4">
-      <h1 class="text-2xl font-bold">Admin Menu</h1>
-      <div id="adminMenuList" class="space-y-2"></div>
-      <div class="bg-white p-4 rounded shadow space-y-2">
-        <input id="newMenuKategori" placeholder="Kategori" class="border p-2 rounded w-full">
-        <input id="newMenuName" placeholder="Nama Menu" class="border p-2 rounded w-full">
-        <input id="newMenuPrice" type="number" placeholder="Harga" class="border p-2 rounded w-full">
-        <button onclick="addMenu()" class="bg-teal-600 text-white px-4 py-2 rounded w-full">Tambah Menu</button>
+      <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+        <button onclick="showSection('kasir')" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/20"><span>🛒</span>Kasir</button>
+        <button onclick="showSection('antrian')" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/20"><span>📋</span>Antrian</button>
+        <button onclick="showSection('laporan')" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/20"><span>📊</span>Laporan</button>
+        <button onclick="showSection('adminMenu')" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/20"><span>⚙️</span>Admin Menu</button>
+      </nav>
+      <div class="p-4 text-sm text-center border-t border-white/20">
+        &copy; 2025 Numpang Ngopi.crb
       </div>
-    </section>
+    </aside>
 
-  </main>
-</div>
+    <!-- MAIN AREA -->
+    <div class="flex-1 flex flex-col">
+
+      <!-- TOPBAR -->
+      <header class="md:hidden bg-white shadow p-4 flex items-center">
+        <button onclick="toggleSidebar()" class="mr-4 text-gray-600 focus:outline-none">☰</button>
+        <h1 class="text-lg font-bold">Numpang Ngopi - Kasir</h1>
+      </header>
+
+      <!-- MAIN CONTENT -->
+      <main class="flex-1 p-6 overflow-y-auto">
+
+        <!-- KASIR -->
+        <section id="kasir" class="hidden">
+          <h2 class="text-2xl font-bold mb-4">Kasir - Input Transaksi</h2>
+          <div class="bg-white rounded-xl shadow p-4">
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="block mb-1 font-medium">Pilih Menu</label>
+                <select id="menuKasir" class="w-full p-2 border rounded"></select>
+              </div>
+              <div>
+                <label class="block mb-1 font-medium">Jumlah</label>
+                <input type="number" id="qtyKasir" class="w-full p-2 border rounded" placeholder="1" min="1">
+              </div>
+            </div>
+            <button onclick="addToCart()" class="mt-4 w-full bg-[#1d899b] text-white px-4 py-2 rounded-xl hover:bg-[#15707e]">Tambahkan ke Keranjang</button>
+          </div>
+          <div class="mt-6 bg-white rounded-xl shadow p-4">
+            <h3 class="text-xl font-bold mb-2">Keranjang</h3>
+            <ul id="cartList" class="space-y-2"></ul>
+            <p class="mt-3 font-bold">Total: Rp <span id="cartTotal">0</span></p>
+            <div class="grid md:grid-cols-3 gap-4 mt-4">
+              <input type="number" id="payment" placeholder="Bayar" class="p-2 border rounded">
+              <input type="text" id="waNumber" placeholder="Nomor WhatsApp (628...)" class="p-2 border rounded">
+              <button onclick="checkout()" class="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700">Checkout</button>
+            </div>
+            <p class="mt-2 text-sm text-gray-500">Kembalian: Rp <span id="change">0</span></p>
+          </div>
+        </section>
+
+        <!-- ANTRIAN -->
+        <section id="antrian" class="hidden">
+          <h2 class="text-2xl font-bold mb-4">Antrian Pesanan</h2>
+          <div id="orderQueue" class="grid md:grid-cols-2 gap-4"></div>
+        </section>
+
+        <!-- LAPORAN -->
+        <section id="laporan" class="hidden">
+          <h2 class="text-2xl font-bold mb-4">Laporan Penjualan</h2>
+          <input type="date" id="filterDate" class="p-2 border rounded mb-4" />
+          <div id="salesReport" class="bg-white rounded-xl shadow p-4">
+            <p>Total transaksi: <span id="salesCount">0</span></p>
+            <p>Total omzet: Rp <span id="salesTotal">0</span></p>
+          </div>
+        </section>
+
+        <!-- ADMIN MENU -->
+        <section id="adminMenu" class="hidden">
+          <h2 class="text-2xl font-bold mb-4">Admin Menu</h2>
+          <div class="bg-white p-4 rounded-xl shadow space-y-4">
+            <div class="grid md:grid-cols-3 gap-4">
+              <input id="menuKategori" class="p-2 border rounded" placeholder="Kategori (Coffee/Non Coffee)">
+              <input id="menuNama" class="p-2 border rounded" placeholder="Nama Menu">
+              <input id="menuHarga" type="number" class="p-2 border rounded" placeholder="Harga">
+            </div>
+            <button onclick="tambahMenu()" class="bg-[#1d899b] text-white px-4 py-2 rounded-xl hover:bg-[#15707e]">Tambah Menu</button>
+          </div>
+          <div class="mt-6 bg-white p-4 rounded-xl shadow">
+            <h3 class="text-xl font-bold mb-3">Daftar Menu</h3>
+            <div id="menuList" class="space-y-2"></div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
 
 <script>
-const firebaseConfig = {
-  apiKey: "ISI_APIKEY_KAMU",
-  authDomain: "ISI_DOMAIN.firebaseapp.com",
-  databaseURL: "https://numpangngopi-f7462-default-rtdb.firebaseio.com/",
-  projectId: "numpangngopi-f7462",
-  storageBucket: "ISI_BUCKET.appspot.com",
-  messagingSenderId: "ISI_MSG_ID",
-  appId: "ISI_APP_ID"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+  const firebaseConfig = {
+    apiKey: "AIzaSyDk9w-nuV6ls0lmjZyQYBqKpcU1y7fAeME",
+    authDomain: "numpang-ngopi-crb-2c1b7.firebaseapp.com",
+    databaseURL: "https://numpang-ngopi-crb-2c1b7-default-rtdb.firebaseio.com/",
+    projectId: "numpang-ngopi-crb-2c1b7",
+    storageBucket: "numpang-ngopi-crb-2c1b7.appspot.com",
+    messagingSenderId: "450325403368",
+    appId: "1:450325403368:web:exampleid"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-let cart = {};
-let total = 0;
+  let cart = {};
+  let total = 0;
 
-function showPage(page) {
-  document.querySelectorAll("main section").forEach(sec=>sec.classList.add("hidden"));
-  document.getElementById(page+"Page").classList.remove("hidden");
-}
+  const menuKasir = document.getElementById("menuKasir");
 
-function loadMenu(){
-  db.ref("menu").on("value",snap=>{
-    let data = snap.val()||{};
-    let menuList=document.getElementById("menuList");
-    let adminList=document.getElementById("adminMenuList");
-    menuList.innerHTML=""; adminList.innerHTML="";
-    for(let cat in data){
-      data[cat].forEach((item,i)=>{
-        // kasir
-        let btn=document.createElement("button");
-        btn.className="bg-white p-4 rounded shadow hover:bg-gray-100";
-        btn.innerHTML=`<div class='font-bold'>${item.name}</div><div>Rp${item.price}</div>`;
-        btn.onclick=()=>addToCart(item.name,item.price);
-        menuList.appendChild(btn);
-        // admin
-        let row=document.createElement("div");
-        row.className="flex justify-between bg-white p-2 rounded shadow";
-        row.innerHTML=`<span>${cat} - ${item.name} (Rp${item.price})</span>
-          <div class='space-x-2'>
-            <button class='px-2 py-1 bg-yellow-500 text-white rounded' onclick="editPrice('${cat}',${i})">Ubah</button>
-            <button class='px-2 py-1 bg-red-500 text-white rounded' onclick="deleteMenu('${cat}',${i})">Hapus</button>
-          </div>`;
-        adminList.appendChild(row);
+  // --- Ambil menu untuk dropdown kasir ---
+  function loadMenuKasir() {
+    menuKasir.innerHTML = "";
+    db.ref("menu").once("value").then(snap => {
+      snap.forEach(cat => {
+        cat.val().forEach(item => {
+          const opt = document.createElement("option");
+          opt.value = item.name;
+          opt.textContent = `${item.name} - Rp${item.price}`;
+          opt.dataset.price = item.price;
+          menuKasir.appendChild(opt);
+        });
       });
+    });
+  }
+  loadMenuKasir();
+
+  function addToCart() {
+    const menu = menuKasir.value;
+    const price = parseInt(menuKasir.selectedOptions[0].dataset.price);
+    const qty = parseInt(document.getElementById("qtyKasir").value);
+    if (!qty || qty < 1) return alert("Masukkan jumlah valid!");
+    if (!cart[menu]) cart[menu] = { qty: 0, harga: price };
+    cart[menu].qty += qty;
+    updateCart();
+  }
+
+  function updateCart() {
+    const list = document.getElementById("cartList");
+    list.innerHTML = "";
+    total = 0;
+    for (let menu in cart) {
+      const item = cart[menu];
+      const subtotal = item.qty * item.harga;
+      total += subtotal;
+      const li = document.createElement("li");
+      li.className = "flex justify-between bg-gray-50 p-2 rounded";
+      li.textContent = `${menu} (${item.qty}x) = Rp${subtotal}`;
+      list.appendChild(li);
     }
-  });
-}
-loadMenu();
-
-function addToCart(name, harga){
-  if(!cart[name]) cart[name]={qty:0,harga};
-  cart[name].qty++;
-  updateCart();
-}
-function updateCart(){
-  let ul=document.getElementById("cartList");
-  ul.innerHTML=""; total=0;
-  for(let n in cart){
-    let item=cart[n];
-    let li=document.createElement("li");
-    li.textContent=`${n} x${item.qty} = Rp${item.qty*item.harga}`;
-    ul.appendChild(li);
-    total+=item.qty*item.harga;
+    document.getElementById("cartTotal").textContent = total;
   }
-  document.getElementById("total").textContent=total;
-}
 
-async function checkout(){
-  if(total<=0) return alert("Keranjang kosong!");
-  let bayar=parseInt(document.getElementById("payment").value);
-  if(!bayar||bayar<total) return alert("Pembayaran kurang!");
-  let phone=document.getElementById("waNumber").value.trim();
-  if(!phone.startsWith("0")) return alert("Nomor harus diawali 0!");
+  async function checkout() {
+    if (total <= 0) return alert("Keranjang kosong!");
+    let bayar = parseInt(document.getElementById("payment").value);
+    if (!bayar || bayar < total) return alert("Pembayaran kurang!");
+    let phone = document.getElementById("waNumber").value.trim();
+    if (!phone) return alert("Masukkan nomor WhatsApp pelanggan!");
 
-  let phoneWA="62"+phone.slice(1);
+    const snap = await db.ref("orders").orderByChild("noUrut").limitToLast(1).get();
+    let last = 0;
+    snap.forEach(s => { last = s.val().noUrut || 0 });
+    let noUrut = last + 1;
 
-  const snap=await db.ref("orders").orderByChild("noUrut").limitToLast(1).get();
-  let last=0; snap.forEach(s=>last=s.val().noUrut||0);
-  let noUrut=last+1;
+    let newOrder = db.ref("orders").push();
+    newOrder.set({
+      noUrut: noUrut,
+      items: cart,
+      total: total,
+      status: "pending",
+      time: new Date().toISOString()
+    });
 
-  let newOrder=db.ref("orders").push();
-  newOrder.set({noUrut,items:cart,total,status:"pending",time:new Date().toISOString()});
+    let struk = `☕ Numpang Ngopi CRB\nNo Antrian: ${noUrut}\n=====================\n`;
+    for (let menu in cart) {
+      let item = cart[menu];
+      let subtotal = item.qty * item.harga;
+      struk += `${menu} ${item.qty} x ${item.harga} = Rp${subtotal}\n`;
+    }
+    struk += "---------------------\n";
+    struk += `Total: Rp${total}\nBayar: Rp${bayar}\nKembali: Rp${bayar - total}\n`;
+    struk += "=====================\nTerima kasih! #KopibeneranKopi";
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(struk)}`, "_blank");
 
-  let struk=`☕ Numpang Ngopi CRB\nNo Antrian: ${noUrut}\n=====================\n`;
-  for(let menu in cart){
-    let i=cart[menu]; struk+=`${menu} ${i.qty} x ${i.harga} = Rp${i.qty*i.harga}\n`;
+    cart = {};
+    updateCart();
+    document.getElementById("payment").value = "";
+    document.getElementById("waNumber").value = "";
+    alert("Pesanan dikirim ke Barista!");
   }
-  struk+=`---------------------\nTotal: Rp${total}\nBayar: Rp${bayar}\nKembali: Rp${bayar-total}`;
-  window.open(`https://wa.me/${phoneWA}?text=${encodeURIComponent(struk)}`,"_blank");
 
-  cart={}; updateCart(); document.getElementById("payment").value=""; document.getElementById("waNumber").value="";
-}
+  // --- Realtime Antrian ---
+  const orderQueue = document.getElementById("orderQueue");
+  db.ref("orders").on("value", snap => {
+    orderQueue.innerHTML = "";
+    snap.forEach(child => {
+      const order = child.val();
+      if (order.status === "pending") {
+        const div = document.createElement("div");
+        div.className = "bg-white shadow p-4 rounded-xl";
+        div.innerHTML = `
+          <h3 class="font-bold mb-1">No. ${order.noUrut || '-'}</h3>
+          <ul class="mb-2 text-sm">${Object.keys(order.items).map(m => `<li>${m} (${order.items[m].qty}x)</li>`).join("")}</ul>
+          <p class="mb-2 font-bold">Total: Rp${order.total}</p>
+          <button onclick="selesaiOrder('${child.key}')" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">Selesai</button>
+        `;
+        orderQueue.appendChild(div);
+      }
+    });
+  });
+  function selesaiOrder(id) {
+    db.ref("orders/" + id).update({ status: "done" });
+  }
 
-db.ref("orders").on("value",snap=>{
-  let list=document.getElementById("queueList");
-  list.innerHTML="";
-  snap.forEach(s=>{
-    let o=s.val();
-    let div=document.createElement("div");
-    div.className="bg-white p-2 rounded shadow flex justify-between";
-    div.innerHTML=`#${o.noUrut} - Rp${o.total} <button class='bg-teal-600 text-white px-2 py-1 rounded' onclick="markDone('${s.key}')">Selesai</button>`;
-    list.appendChild(div);
-  });
-});
-function markDone(id){
-  db.ref("orders/"+id).remove();
-}
+  // --- Realtime Laporan ---
+  const filterDate = document.getElementById("filterDate");
+  function loadReport() {
+    const date = filterDate.value || new Date().toISOString().split("T")[0];
+    db.ref("orders").once("value").then(snap => {
+      let count = 0, omzet = 0;
+      snap.forEach(c => {
+        const o = c.val();
+        if (o.status === "done" && o.time.startsWith(date)) {
+          count++;
+          omzet += o.total;
+        }
+      });
+      document.getElementById("salesCount").textContent = count;
+      document.getElementById("salesTotal").textContent = omzet;
+    });
+  }
+  filterDate.addEventListener("change", loadReport);
 
-db.ref("transactions").on("value",snap=>showReport(snap));
-document.getElementById("filterTanggal").addEventListener("change",()=>{
-  db.ref("transactions").once("value").then(s=>showReport(s));
-});
-function showReport(snap){
-  let filter=document.getElementById("filterTanggal").value;
-  let list=document.getElementById("reportList");
-  list.innerHTML="";
-  snap.forEach(s=>{
-    let t=s.val();
-    if(filter && !t.time.startsWith(filter)) return;
-    let div=document.createElement("div");
-    div.className="bg-white p-2 rounded shadow";
-    div.textContent=`${t.time} - Rp${t.total}`;
-    list.appendChild(div);
-  });
-}
+  // --- Admin Menu ---
+  function loadMenuList() {
+    const list = document.getElementById("menuList");
+    list.innerHTML = "";
+    db.ref("menu").once("value").then(snap => {
+      snap.forEach(cat => {
+        const catName = cat.key;
+        const catDiv = document.createElement("div");
+        catDiv.innerHTML = `<h4 class="font-bold">${catName}</h4>`;
+        cat.val().forEach((item, idx) => {
+          const row = document.createElement("div");
+          row.className = "flex justify-between items-center bg-gray-50 p-2 rounded mb-1";
+          row.innerHTML = `
+            <span>${item.name} - Rp${item.price}</span>
+            <div class="space-x-2">
+              <button onclick="ubahHarga('${catName}',${idx})" class="bg-yellow-500 text-white px-2 py-1 rounded">Ubah</button>
+              <button onclick="hapusMenu('${catName}',${idx})" class="bg-red-500 text-white px-2 py-1 rounded">Hapus</button>
+            </div>`;
+          catDiv.appendChild(row);
+        });
+        list.appendChild(catDiv);
+      });
+    });
+  }
 
-function addMenu(){
-  let cat=document.getElementById("newMenuKategori").value;
-  let name=document.getElementById("newMenuName").value;
-  let price=parseInt(document.getElementById("newMenuPrice").value);
-  if(!cat||!name||!price) return alert("Lengkapi data!");
-  db.ref("menu/"+cat).once("value").then(s=>{
-    let arr=s.val()||[];
-    arr.push({name,price});
-    db.ref("menu/"+cat).set(arr);
-    document.getElementById("newMenuKategori").value="";
-    document.getElementById("newMenuName").value="";
-    document.getElementById("newMenuPrice").value="";
-  });
-}
-function deleteMenu(cat,i){
-  db.ref("menu/"+cat).once("value").then(s=>{
-    let arr=s.val(); arr.splice(i,1);
-    db.ref("menu/"+cat).set(arr);
-  });
-}
-function editPrice(cat,i){
-  let newP=prompt("Harga baru:");
-  if(!newP) return;
-  db.ref("menu/"+cat+"/"+i+"/price").set(parseInt(newP));
-}
+  function tambahMenu() {
+    const kat = document.getElementById("menuKategori").value.trim();
+    const nama = document.getElementById("menuNama").value.trim();
+    const harga = parseInt(document.getElementById("menuHarga").value);
+    if (!kat || !nama || !harga) return alert("Lengkapi semua data!");
+    db.ref("menu/"+kat).once("value").then(snap=>{
+      let arr = snap.val() || [];
+      arr.push({name:nama, price:harga});
+      db.ref("menu/"+kat).set(arr).then(()=>{
+        alert("Menu ditambahkan!");
+        document.getElementById("menuNama").value="";
+        document.getElementById("menuHarga").value="";
+        loadMenuKasir();
+        loadMenuList();
+      });
+    });
+  }
+
+  function hapusMenu(kat,idx){
+    db.ref("menu/"+kat).once("value").then(snap=>{
+      let arr = snap.val()||[];
+      arr.splice(idx,1);
+      db.ref("menu/"+kat).set(arr).then(()=>{
+        alert("Menu dihapus");
+        loadMenuKasir();
+        loadMenuList();
+      });
+    });
+  }
+
+  function ubahHarga(kat,idx){
+    const newPrice = prompt("Masukkan harga baru:");
+    if(!newPrice) return;
+    db.ref("menu/"+kat+"/"+idx+"/price").set(parseInt(newPrice)).then(()=>{
+      alert("Harga diperbarui");
+      loadMenuKasir();
+      loadMenuList();
+    });
+  }
+
+  // showSection
+  function showSection(id) {
+    document.querySelectorAll("main section").forEach(s => s.classList.add("hidden"));
+    document.getElementById(id).classList.remove("hidden");
+    if (id === 'laporan') loadReport();
+    if (id === 'adminMenu') loadMenuList();
+  }
+  showSection('kasir');
+
+  function toggleSidebar() {
+    document.getElementById("sidebar").classList.toggle("-translate-x-full");
+  }
 </script>
 </body>
 </html>
