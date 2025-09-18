@@ -7,6 +7,7 @@
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Chart.js -->
 
   <style>
     body {
@@ -97,6 +98,12 @@
     <button class="btn-add" onclick="addMenu()">Tambah Menu</button>
     <h3>📋 Daftar Menu</h3>
     <ul id="menuList"></ul>
+
+    <h3>📊 Dashboard Owner</h3>
+    <canvas id="chartOrdersHour" height="150"></canvas>
+    <canvas id="chartOrdersDay" height="150"></canvas>
+    <p><b>🎯 Target Harian: <span id="target">50</span> order</b></p>
+    <p><b>Pencapaian: <span id="achievement">0%</span></b></p>
   </div>
 
   <!-- TV ANTRIAN -->
@@ -126,8 +133,8 @@
         document.getElementById("navSection").classList.remove("hidden");
         showSection(data.role);
         if (data.role === "kasir") loadMenus();
-        if (data.role === "owner") loadMenusOwner();
-        if (data.role === "kasir" || data.role === "tv") listenNotifications(); // aktifkan notifikasi
+        if (data.role === "owner") { loadMenusOwner(); loadDashboard(); }
+        if (data.role === "kasir" || data.role === "tv") listenNotifications();
       } else {
         alert("Login gagal!");
       }
@@ -150,7 +157,7 @@
     hideAll();
     if (role === "kasir") { document.getElementById("kasirSection").classList.remove("hidden"); loadMenus(); }
     if (role === "barista") { document.getElementById("baristaSection").classList.remove("hidden"); listenOrders(); }
-    if (role === "owner") { document.getElementById("ownerSection").classList.remove("hidden"); loadMenusOwner(); }
+    if (role === "owner") { document.getElementById("ownerSection").classList.remove("hidden"); loadMenusOwner(); loadDashboard(); }
     if (role === "tv") { document.getElementById("tvSection").classList.remove("hidden"); listenTV(); }
   }
 
@@ -251,6 +258,72 @@
     });
   }
   function deleteMenu(menu) { db.ref("menus/" + menu).remove(); loadMenusOwner(); }
+
+  // ---------- Dashboard Owner ----------
+  function loadDashboard() {
+    let ordersRef = db.ref("orders");
+    let perHour = {}, perDay = {};
+    let doneCount = 0, totalCount = 0;
+
+    ordersRef.on("value", snapshot => {
+      perHour = {}; perDay = {}; doneCount = 0; totalCount = 0;
+
+      snapshot.forEach(child => {
+        let order = child.val();
+        let date = new Date(order.time);
+        let hour = date.getHours();
+        let day = date.toISOString().slice(0,10);
+
+        if (!perHour[hour]) perHour[hour] = { masuk: 0, selesai: 0 };
+        perHour[hour].masuk++;
+        if (order.status === "done") perHour[hour].selesai++;
+
+        if (!perDay[day]) perDay[day] = { masuk: 0, selesai: 0 };
+        perDay[day].masuk++;
+        if (order.status === "done") perDay[day].selesai++;
+
+        totalCount++;
+        if (order.status === "done") doneCount++;
+      });
+
+      // Grafik per jam
+      let labelsHour = Object.keys(perHour).map(h => h + ":00");
+      let dataMasukHour = Object.values(perHour).map(v => v.masuk);
+      let dataSelesaiHour = Object.values(perHour).map(v => v.selesai);
+
+      new Chart(document.getElementById("chartOrdersHour"), {
+        type: 'bar',
+        data: {
+          labels: labelsHour,
+          datasets: [
+            { label: "Masuk", data: dataMasukHour, backgroundColor: "#8d6e63" },
+            { label: "Selesai", data: dataSelesaiHour, backgroundColor: "#4caf50" }
+          ]
+        }
+      });
+
+      // Grafik per hari
+      let labelsDay = Object.keys(perDay);
+      let dataMasukDay = Object.values(perDay).map(v => v.masuk);
+      let dataSelesaiDay = Object.values(perDay).map(v => v.selesai);
+
+      new Chart(document.getElementById("chartOrdersDay"), {
+        type: 'line',
+        data: {
+          labels: labelsDay,
+          datasets: [
+            { label: "Masuk", data: dataMasukDay, borderColor: "#8d6e63", fill: false },
+            { label: "Selesai", data: dataSelesaiDay, borderColor: "#4caf50", fill: false }
+          ]
+        }
+      });
+
+      // Target harian
+      let target = parseInt(document.getElementById("target").innerText);
+      let achievement = Math.round((doneCount / target) * 100);
+      document.getElementById("achievement").innerText = achievement + "%";
+    });
+  }
 
   // ---------- TV ----------
   function listenTV() {
