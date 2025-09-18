@@ -10,37 +10,18 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Chart.js -->
 
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      background: linear-gradient(135deg, #f5ebe0, #e9d5ca);
-      color: #3e2723;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-    }
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; background: linear-gradient(135deg, #f5ebe0, #e9d5ca); color: #3e2723;
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; }
     h1 { color: #3e2723; text-align: center; font-size: 2rem; margin-bottom: 15px; }
     h2 { color: #5d4037; border-left: 6px solid #d7ccc8; padding-left: 10px; font-size: 1.3rem; margin-bottom: 15px; }
     .hidden { display: none; }
-
-    .card {
-      background: #fff;
-      border-radius: 15px;
-      padding: 20px;
-      margin: 15px 0;
-      width: 100%;
-      max-width: 600px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-    }
+    .card { background: #fff; border-radius: 15px; padding: 20px; margin: 15px 0; width: 100%; max-width: 600px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1); }
     ul { list-style-type: none; padding: 0; }
     li { margin: 10px 0; padding: 12px 15px; border: 1px solid #eee; border-radius: 12px; background: #fafafa; }
     input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 10px; font-size: 1rem; }
-    button {
-      margin-top: 8px; padding: 12px 18px; border: none; border-radius: 10px; cursor: pointer; 
-      font-size: 1rem; font-weight: bold; width: 100%;
-    }
+    button { margin-top: 8px; padding: 12px 18px; border: none; border-radius: 10px; cursor: pointer;
+      font-size: 1rem; font-weight: bold; width: 100%; }
     .btn-login { background: #6d4c41; color: white; }
     .btn-add { background: #8d6e63; color: white; }
     .btn-done { background: #4caf50; color: white; }
@@ -102,8 +83,12 @@
     <h3>📊 Dashboard Owner</h3>
     <canvas id="chartOrdersHour" height="150"></canvas>
     <canvas id="chartOrdersDay" height="150"></canvas>
-    <p><b>🎯 Target Harian: <span id="target">50</span> order</b></p>
-    <p><b>Pencapaian: <span id="achievement">0%</span></b></p>
+
+    <!-- 🎯 Target Harian -->
+    <h3>🎯 Target Harian</h3>
+    <input type="number" id="dailyTarget" placeholder="Target cup/hari" min="1">
+    <button class="btn-add" onclick="updateTarget()">Update Target</button>
+    <p id="targetInfo">✅ Pesanan selesai: 0 / 30 (0%)</p>
   </div>
 
   <!-- TV ANTRIAN -->
@@ -133,18 +118,13 @@
         document.getElementById("navSection").classList.remove("hidden");
         showSection(data.role);
         if (data.role === "kasir") loadMenus();
-        if (data.role === "owner") { loadMenusOwner(); loadDashboard(); }
+        if (data.role === "owner") { loadMenusOwner(); loadDashboard(); checkDailyReset(); }
         if (data.role === "kasir" || data.role === "tv") listenNotifications();
-      } else {
-        alert("Login gagal!");
-      }
+      } else { alert("Login gagal!"); }
     });
   }
 
-  function logout() {
-    sessionStorage.clear();
-    location.reload();
-  }
+  function logout() { sessionStorage.clear(); location.reload(); }
 
   // ---------- Navigasi Role ----------
   function hideAll() {
@@ -152,12 +132,11 @@
       document.getElementById(id).classList.add("hidden");
     });
   }
-
   function showSection(role) {
     hideAll();
     if (role === "kasir") { document.getElementById("kasirSection").classList.remove("hidden"); loadMenus(); }
     if (role === "barista") { document.getElementById("baristaSection").classList.remove("hidden"); listenOrders(); }
-    if (role === "owner") { document.getElementById("ownerSection").classList.remove("hidden"); loadMenusOwner(); loadDashboard(); }
+    if (role === "owner") { document.getElementById("ownerSection").classList.remove("hidden"); loadMenusOwner(); loadDashboard(); checkDailyReset(); }
     if (role === "tv") { document.getElementById("tvSection").classList.remove("hidden"); listenTV(); }
   }
 
@@ -167,10 +146,10 @@
     db.ref("menus").once("value").then(snapshot => {
       let menuKasir = document.getElementById("menuKasir");
       menuKasir.innerHTML = "";
-      snapshot.forEach(child => {
+      snapshot.forEach(m => {
         let opt = document.createElement("option");
-        opt.value = child.key;
-        opt.textContent = `${child.key} - Rp${child.val().harga}`;
+        opt.value = m.key;
+        opt.textContent = m.key + " - Rp" + m.val().harga;
         menuKasir.appendChild(opt);
       });
     });
@@ -183,33 +162,31 @@
       let harga = snapshot.val().harga;
       if (!cart[menu]) cart[menu] = { qty: 0, harga: harga };
       cart[menu].qty += qty;
+      total += harga * qty;
       updateCart();
     });
   }
   function updateCart() {
-    let cartList = document.getElementById("cartList");
-    cartList.innerHTML = ""; total = 0;
-    Object.keys(cart).forEach(menu => {
-      let item = cart[menu];
-      let subtotal = item.qty * item.harga;
-      total += subtotal;
+    let list = document.getElementById("cartList");
+    list.innerHTML = "";
+    for (let m in cart) {
       let li = document.createElement("li");
-      li.textContent = `${menu} ${item.qty} x ${item.harga} = Rp${subtotal}`;
-      cartList.appendChild(li);
-    });
-    document.getElementById("cartTotal").innerText = total;
-    let bayar = parseInt(document.getElementById("payment").value) || 0;
-    document.getElementById("change").innerText = bayar - total >= 0 ? (bayar - total) : 0;
+      li.textContent = `${m} x${cart[m].qty} = Rp${cart[m].qty * cart[m].harga}`;
+      list.appendChild(li);
+    }
+    document.getElementById("cartTotal").textContent = total;
   }
-  document.getElementById("payment").addEventListener("input", updateCart);
   function checkout() {
-    if (total <= 0) return alert("Keranjang kosong!");
+    if (total === 0) return alert("Keranjang kosong!");
     let bayar = parseInt(document.getElementById("payment").value);
-    if (!bayar || bayar < total) return alert("Pembayaran kurang!");
-    let newOrder = db.ref("orders").push();
-    newOrder.set({ items: cart, total: total, status: "pending", time: new Date().toISOString() });
-    cart = {}; updateCart(); document.getElementById("payment").value = "";
-    alert("Pesanan dikirim ke Barista!");
+    if (!bayar || bayar < total) return alert("Nominal bayar kurang!");
+    let change = bayar - total;
+    document.getElementById("change").textContent = change;
+    let orderId = "ORD" + Date.now();
+    db.ref("orders/" + orderId).set({ items: cart, total: total, status: "pending", time: new Date().toISOString() });
+    alert("✅ Pesanan berhasil dicatat & struk terkirim");
+    cart = {}; total = 0; updateCart(); document.getElementById("cartTotal").textContent = 0;
+    document.getElementById("payment").value = ""; document.getElementById("change").textContent = 0;
   }
 
   // ---------- Barista ----------
@@ -217,20 +194,16 @@
     db.ref("orders").on("value", snapshot => {
       let list = document.getElementById("orderList");
       list.innerHTML = "";
-      snapshot.forEach(child => {
-        let order = child.val();
+      snapshot.forEach(o => {
+        let order = o.val();
         let li = document.createElement("li");
-        if (order.items) {
-          li.innerHTML = `<b>Pesanan</b><br>`;
-          Object.keys(order.items).forEach(m => {
-            let it = order.items[m];
-            li.innerHTML += `- ${m} ${it.qty}x<br>`;
-          });
-          li.innerHTML += `<b>Total: Rp${order.total}</b> `;
-        }
-        li.innerHTML += ` <span class="${order.status}">[${order.status}]</span>`;
+        li.innerHTML = `📝 <b>${o.key}</b><br>Total: Rp${order.total}<br>Status: <span class="${order.status === "done" ? "done" : "pending"}">${order.status}</span>`;
         if (order.status === "pending") {
-          li.innerHTML += ` <button class="btn-done" onclick="doneOrder('${child.key}')">Selesai</button>`;
+          let btn = document.createElement("button");
+          btn.className = "btn-done";
+          btn.textContent = "Selesaikan Pesanan";
+          btn.onclick = () => doneOrder(o.key);
+          li.appendChild(btn);
         }
         list.appendChild(li);
       });
@@ -238,90 +211,102 @@
   }
   function doneOrder(id) { db.ref("orders/" + id).update({ status: "done" }); }
 
-  // ---------- Owner ----------
+  // ---------- Owner Menu ----------
   function addMenu() {
-    let menu = document.getElementById("menuOwner").value;
-    let harga = document.getElementById("hargaOwner").value;
-    db.ref("menus/" + menu).set({ harga: parseInt(harga) });
-    loadMenusOwner(); alert("Menu ditambahkan!");
+    let menu = document.getElementById("menuOwner").value.toLowerCase();
+    let harga = parseInt(document.getElementById("hargaOwner").value);
+    if (!menu || !harga) return alert("Menu/harga tidak valid!");
+    db.ref("menus/" + menu).set({ harga: harga });
+    document.getElementById("menuOwner").value = "";
+    document.getElementById("hargaOwner").value = "";
+    loadMenusOwner();
   }
   function loadMenusOwner() {
     db.ref("menus").once("value").then(snapshot => {
-      let menuList = document.getElementById("menuList");
-      menuList.innerHTML = "";
-      snapshot.forEach(child => {
+      let list = document.getElementById("menuList");
+      list.innerHTML = "";
+      snapshot.forEach(m => {
         let li = document.createElement("li");
-        li.innerHTML = `${child.key} - Rp${child.val().harga}
-          <button class="btn-delete" onclick="deleteMenu('${child.key}')">Hapus</button>`;
-        menuList.appendChild(li);
+        li.innerHTML = `${m.key} - Rp${m.val().harga} <button class="btn-delete" onclick="deleteMenu('${m.key}')">Hapus</button>`;
+        list.appendChild(li);
       });
     });
   }
   function deleteMenu(menu) { db.ref("menus/" + menu).remove(); loadMenusOwner(); }
 
-  // ---------- Dashboard Owner ----------
+  // ---------- Dashboard Owner + Target Harian ----------
+  const targetRef = db.ref("settings/dailyTarget");
+  const resetRef = db.ref("settings/lastResetDate");
+  const reportsRef = db.ref("reports");
+
+  function checkDailyReset() {
+    let today = new Date().toISOString().split("T")[0];
+    resetRef.once("value").then(snapshot => {
+      let lastReset = snapshot.val();
+      if (lastReset && lastReset !== today) {
+        Promise.all([targetRef.once("value"), db.ref("orders").once("value")]).then(([targetSnap, ordersSnap]) => {
+          let target = targetSnap.val() || 30;
+          let selesai = 0;
+          ordersSnap.forEach(o => { if (o.val().status === "done") selesai++; });
+          reportsRef.child(lastReset).set({ target: target, selesai: selesai });
+        });
+      }
+      if (lastReset !== today) {
+        targetRef.set(30); resetRef.set(today);
+        document.getElementById("dailyTarget").value = 30;
+        document.getElementById("targetInfo").innerText = `🎯 Target reset otomatis ke 30 cup (tanggal ${today})`;
+      }
+    });
+  }
+
+  targetRef.on("value", snapshot => {
+    if (snapshot.exists()) {
+      document.getElementById("dailyTarget").value = snapshot.val();
+      calculatePercentage();
+    } else { targetRef.set(30); document.getElementById("dailyTarget").value = 30; }
+  });
+
+  function updateTarget() {
+    let newTarget = parseInt(document.getElementById("dailyTarget").value);
+    if (!newTarget || newTarget <= 0) return alert("Target tidak valid!");
+    targetRef.set(newTarget); alert("Target harian diperbarui ✅");
+  }
+
+  function calculatePercentage() {
+    Promise.all([db.ref("orders").once("value"), targetRef.once("value")]).then(([ordersSnap, targetSnap]) => {
+      let target = targetSnap.val() || 30; let selesai = 0;
+      ordersSnap.forEach(o => { if (o.val().status === "done") selesai++; });
+      let persen = ((selesai / target) * 100).toFixed(1);
+      document.getElementById("targetInfo").innerText = `✅ Pesanan selesai: ${selesai} / ${target} (${persen}%)`;
+    });
+  }
+
   function loadDashboard() {
-    let ordersRef = db.ref("orders");
-    let perHour = {}, perDay = {};
-    let doneCount = 0, totalCount = 0;
-
-    ordersRef.on("value", snapshot => {
-      perHour = {}; perDay = {}; doneCount = 0; totalCount = 0;
-
-      snapshot.forEach(child => {
-        let order = child.val();
-        let date = new Date(order.time);
-        let hour = date.getHours();
-        let day = date.toISOString().slice(0,10);
-
-        if (!perHour[hour]) perHour[hour] = { masuk: 0, selesai: 0 };
-        perHour[hour].masuk++;
-        if (order.status === "done") perHour[hour].selesai++;
-
-        if (!perDay[day]) perDay[day] = { masuk: 0, selesai: 0 };
-        perDay[day].masuk++;
-        if (order.status === "done") perDay[day].selesai++;
-
-        totalCount++;
-        if (order.status === "done") doneCount++;
+    db.ref("orders").on("value", snapshot => {
+      let perJam = {}; let perHari = {};
+      snapshot.forEach(o => {
+        let order = o.val();
+        let d = new Date(order.time);
+        let jam = d.getHours(); let hari = d.toISOString().split("T")[0];
+        if (!perJam[jam]) perJam[jam] = { masuk: 0, selesai: 0 };
+        if (!perHari[hari]) perHari[hari] = { masuk: 0, selesai: 0 };
+        perJam[jam].masuk++; perHari[hari].masuk++;
+        if (order.status === "done") { perJam[jam].selesai++; perHari[hari].selesai++; }
       });
-
-      // Grafik per jam
-      let labelsHour = Object.keys(perHour).map(h => h + ":00");
-      let dataMasukHour = Object.values(perHour).map(v => v.masuk);
-      let dataSelesaiHour = Object.values(perHour).map(v => v.selesai);
-
-      new Chart(document.getElementById("chartOrdersHour"), {
-        type: 'bar',
-        data: {
-          labels: labelsHour,
-          datasets: [
-            { label: "Masuk", data: dataMasukHour, backgroundColor: "#8d6e63" },
-            { label: "Selesai", data: dataSelesaiHour, backgroundColor: "#4caf50" }
-          ]
-        }
-      });
-
-      // Grafik per hari
-      let labelsDay = Object.keys(perDay);
-      let dataMasukDay = Object.values(perDay).map(v => v.masuk);
-      let dataSelesaiDay = Object.values(perDay).map(v => v.selesai);
-
-      new Chart(document.getElementById("chartOrdersDay"), {
-        type: 'line',
-        data: {
-          labels: labelsDay,
-          datasets: [
-            { label: "Masuk", data: dataMasukDay, borderColor: "#8d6e63", fill: false },
-            { label: "Selesai", data: dataSelesaiDay, borderColor: "#4caf50", fill: false }
-          ]
-        }
-      });
-
-      // Target harian
-      let target = parseInt(document.getElementById("target").innerText);
-      let achievement = Math.round((doneCount / target) * 100);
-      document.getElementById("achievement").innerText = achievement + "%";
+      // Chart per jam
+      let ctxHour = document.getElementById("chartOrdersHour").getContext("2d");
+      new Chart(ctxHour, { type: "bar", data: {
+        labels: Object.keys(perJam), datasets: [
+          { label: "Masuk", data: Object.values(perJam).map(v => v.masuk), backgroundColor: "rgba(255,159,64,0.7)" },
+          { label: "Selesai", data: Object.values(perJam).map(v => v.selesai), backgroundColor: "rgba(75,192,192,0.7)" }
+        ] } });
+      // Chart per hari
+      let ctxDay = document.getElementById("chartOrdersDay").getContext("2d");
+      new Chart(ctxDay, { type: "line", data: {
+        labels: Object.keys(perHari), datasets: [
+          { label: "Masuk", data: Object.values(perHari).map(v => v.masuk), borderColor: "orange", fill: false },
+          { label: "Selesai", data: Object.values(perHari).map(v => v.selesai), borderColor: "green", fill: false }
+        ] } });
     });
   }
 
@@ -330,18 +315,10 @@
     db.ref("orders").on("value", snapshot => {
       let list = document.getElementById("tvOrders");
       list.innerHTML = "";
-      snapshot.forEach(child => {
-        let order = child.val();
+      snapshot.forEach(o => {
+        let order = o.val();
         let li = document.createElement("li");
-        if (order.items) {
-          li.innerHTML = `<b>Pesanan</b><br>`;
-          Object.keys(order.items).forEach(m => {
-            let it = order.items[m];
-            li.innerHTML += `- ${m} ${it.qty}x<br>`;
-          });
-          li.innerHTML += `<b>Total: Rp${order.total}</b> `;
-        }
-        li.innerHTML += ` <span class="${order.status}">[${order.status}]</span>`;
+        li.textContent = `${o.key} - Rp${order.total} (${order.status})`;
         list.appendChild(li);
       });
     });
@@ -353,12 +330,14 @@
       let order = snapshot.val();
       if (order.status === "done") {
         alert("✅ Pesanan Selesai!\nTotal: Rp" + order.total);
-        document.getElementById("notifSound").play().catch(e => {
-          console.log("Autoplay dicegah:", e);
-        });
+        document.getElementById("notifSound").play().catch(e => console.log("Autoplay dicegah:", e));
       }
     });
-  }
+<script>
+  // ---------- Firebase ----------
+  const firebaseConfig = { databaseURL: "https://depelop-nnc-default-rtdb.firebaseio.com/" };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
   // ---------- Menu Default ----------
   const defaultMenus = {
@@ -368,11 +347,21 @@
     "taro latte": { harga: 8000 },
     "choco latte": { harga: 8000 },
     "redvelvet latte": { harga: 8000 },
+    "espresso": { harga: 7000 },
+    "cafe latte": { harga: 9000 },
+    "mokachino": { harga: 10000 },
+    "vietnam drip": { harga: 9000 },
     "extra shot": { harga: 2000 },
     "gula aren": { harga: 1000 },
-    "ice": { harga: 1000 }
+    "ice": { harga: 1000 },
+    "hot": { harga: 0 }
   };
-  db.ref("menus").once("value").then(snapshot => { if (!snapshot.exists()) db.ref("menus").set(defaultMenus); });
+
+  // Pastikan menu default terset sekali
+  db.ref("menus").once("value").then(snapshot => {
+    if (!snapshot.exists()) {
+      db.ref("menus").set(defaultMenus);
+      console.log("✅ Default menu dimasukkan ke database.");
+    }
+  });
 </script>
-</body>
-</html>
