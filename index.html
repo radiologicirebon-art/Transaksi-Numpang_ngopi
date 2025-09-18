@@ -18,13 +18,13 @@
       </div>
       <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
         <button onclick="showSection('kasir')" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/20 transition">
-          <span>🛒</span> <span>Kasir</span>
+          🛒 <span>Kasir</span>
         </button>
         <button onclick="showSection('antrian')" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/20 transition">
-          <span>📋</span> <span>Antrian</span>
+          📋 <span>Antrian</span>
         </button>
         <button onclick="showSection('laporan')" class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-white/20 transition">
-          <span>📊</span> <span>Laporan</span>
+          📊 <span>Laporan</span>
         </button>
       </nav>
       <div class="p-4 text-sm text-center border-t border-white/20">
@@ -34,22 +34,18 @@
 
     <!-- MAIN AREA -->
     <div class="flex-1 flex flex-col">
-
       <!-- TOPBAR -->
       <header class="md:hidden bg-white shadow p-4 flex items-center">
-        <button onclick="toggleSidebar()" class="mr-4 text-gray-600 focus:outline-none">
-          ☰
-        </button>
+        <button onclick="toggleSidebar()" class="mr-4 text-gray-600 focus:outline-none">☰</button>
         <h1 class="text-lg font-bold">Numpang Ngopi - Kasir</h1>
       </header>
 
       <!-- MAIN CONTENT -->
       <main class="flex-1 p-6 overflow-y-auto">
-
+        
         <!-- KASIR -->
         <section id="kasir" class="hidden">
           <h2 class="text-2xl font-bold mb-4">Kasir - Input Transaksi</h2>
-
           <div class="bg-white rounded-xl shadow p-4">
             <div class="grid md:grid-cols-2 gap-4">
               <div>
@@ -73,7 +69,6 @@
               <input type="text" id="waNumber" placeholder="Nomor WhatsApp (628...)" class="p-2 border rounded">
               <button onclick="checkout()" class="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700">Checkout</button>
             </div>
-            <p class="mt-2 text-sm text-gray-500">Kembalian: Rp <span id="change">0</span></p>
           </div>
         </section>
 
@@ -87,8 +82,8 @@
         <section id="laporan" class="hidden">
           <h2 class="text-2xl font-bold mb-4">Laporan Penjualan</h2>
           <div class="mb-4">
-            <input type="date" id="filterTanggal" class="p-2 border rounded">
-            <button onclick="loadLaporan()" class="ml-2 bg-[#1d899b] text-white px-3 py-2 rounded hover:bg-[#15707e]">Filter</button>
+            <label for="filterDate" class="block mb-2 font-medium">Pilih Tanggal</label>
+            <input type="date" id="filterDate" class="p-2 border rounded">
           </div>
           <div id="salesReport" class="bg-white rounded-xl shadow p-4">
             <p>Total transaksi: <span id="salesCount">0</span></p>
@@ -167,7 +162,6 @@
     let phone = document.getElementById("waNumber").value.trim();
     if (!phone) return alert("Masukkan nomor WhatsApp pelanggan!");
 
-    // Ambil nomor urut terakhir
     const snap = await db.ref("orders").orderByChild("noUrut").limitToLast(1).get();
     let last = 0;
     snap.forEach(s => { last = s.val().noUrut || 0 });
@@ -175,25 +169,12 @@
 
     let newOrder = db.ref("orders").push();
     newOrder.set({
-      noUrut: noUrut,
+      noUrut,
       items: cart,
       total: total,
       status: "pending",
       time: new Date().toISOString()
     });
-
-    let struk = `☕ Numpang Ngopi CRB\nNo Antrian: ${noUrut}\n=====================\n`;
-    for (let menu in cart) {
-      let item = cart[menu];
-      let subtotal = item.qty * item.harga;
-      struk += `${menu} ${item.qty} x ${item.harga} = Rp${subtotal}\n`;
-    }
-    struk += "---------------------\n";
-    struk += `Total: Rp${total}\nBayar: Rp${bayar}\nKembali: Rp${bayar - total}\n`;
-    struk += "=====================\nTerima kasih! #KopibeneranKopi";
-
-    let url = `https://wa.me/${phone}?text=${encodeURIComponent(struk)}`;
-    window.open(url, "_blank");
 
     cart = {};
     updateCart();
@@ -202,7 +183,6 @@
     alert("Pesanan dikirim ke Barista!");
   }
 
-  // --- Realtime Antrian ---
   const orderQueue = document.getElementById("orderQueue");
   db.ref("orders").on("value", snap => {
     orderQueue.innerHTML = "";
@@ -226,15 +206,19 @@
     db.ref("orders/" + id).update({ status: "done" });
   }
 
-  // --- Laporan Harian + Filter Tanggal ---
-  function loadLaporan() {
-    let selected = document.getElementById("filterTanggal").value;
-    if (!selected) selected = new Date().toISOString().split("T")[0];
-    db.ref("orders").get().then(snap => {
-      let count = 0, omzet = 0;
+  const filterDate = document.getElementById("filterDate");
+  filterDate.value = new Date().toISOString().split("T")[0];
+  filterDate.addEventListener("change", updateReport);
+
+  db.ref("orders").on("value", updateReport);
+
+  function updateReport() {
+    let count = 0, omzet = 0;
+    const selectedDate = filterDate.value;
+    db.ref("orders").once("value").then(snap => {
       snap.forEach(c => {
         const o = c.val();
-        if (o.status === "done" && o.time.startsWith(selected)) {
+        if (o.status === "done" && o.time.startsWith(selectedDate)) {
           count++;
           omzet += o.total;
         }
@@ -243,7 +227,6 @@
       document.getElementById("salesTotal").textContent = omzet;
     });
   }
-  loadLaporan();
 
   function showSection(id) {
     document.querySelectorAll("main section").forEach(s => s.classList.add("hidden"));
@@ -252,8 +235,7 @@
   showSection('kasir');
 
   function toggleSidebar() {
-    const sidebar = document.getElementById("sidebar");
-    sidebar.classList.toggle("-translate-x-full");
+    document.getElementById("sidebar").classList.toggle("-translate-x-full");
   }
 </script>
 </body>
