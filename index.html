@@ -9,6 +9,9 @@
   <!-- Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-100">
   <div class="flex min-h-screen">
@@ -82,9 +85,13 @@
         <section id="laporan" class="hidden">
           <h2 class="text-2xl font-bold mb-4">Laporan Penjualan</h2>
           <input type="date" id="filterDate" class="p-2 border rounded mb-4" />
-          <div id="salesReport" class="bg-white rounded-xl shadow p-4">
+          <div id="salesReport" class="bg-white rounded-xl shadow p-4 mb-6">
             <p>Total transaksi: <span id="salesCount">0</span></p>
             <p>Total omzet: Rp <span id="salesTotal">0</span></p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-4">
+            <h3 class="text-lg font-bold mb-4">Grafik Order per Jam</h3>
+            <canvas id="orderChart" height="120"></canvas>
           </div>
         </section>
 
@@ -234,24 +241,68 @@
     });
   });
   function selesaiOrder(id) {
-    db.ref("orders/" + id).update({ status: "done" });
+    db.ref("orders/" + id).update({ status: "done", finishTime: new Date().toISOString() });
   }
 
-  // --- Realtime Laporan ---
+  // --- Laporan & Grafik ---
   const filterDate = document.getElementById("filterDate");
+  let chartInstance = null;
+
   function loadReport() {
     const date = filterDate.value || new Date().toISOString().split("T")[0];
     db.ref("orders").once("value").then(snap => {
       let count = 0, omzet = 0;
+      let jamData = {};
+
       snap.forEach(c => {
         const o = c.val();
-        if (o.status === "done" && o.time.startsWith(date)) {
-          count++;
-          omzet += o.total;
+        if (o.time && o.time.startsWith(date)) {
+          if (o.status === "done") {
+            count++;
+            omzet += o.total;
+          }
+
+          let jam = new Date(o.time).getHours();
+          if (!jamData[jam]) jamData[jam] = { masuk: 0, selesai: 0, response: [] };
+
+          jamData[jam].masuk++;
+          if (o.status === "done" && o.finishTime) {
+            jamData[jam].selesai++;
+            let rt = (new Date(o.finishTime) - new Date(o.time)) / 60000;
+            jamData[jam].response.push(rt);
+          }
         }
       });
+
       document.getElementById("salesCount").textContent = count;
       document.getElementById("salesTotal").textContent = omzet;
+
+      let labels = Object.keys(jamData).map(j => j + ":00");
+      let totalMasuk = Object.values(jamData).map(d => d.masuk);
+      let totalSelesai = Object.values(jamData).map(d => d.selesai);
+      let responseAvg = Object.values(jamData).map(d =>
+        d.response.length ? (d.response.reduce((a,b)=>a+b,0)/d.response.length).toFixed(1) : 0
+      );
+
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(document.getElementById("orderChart"), {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: [
+            { label: "Order Masuk", data: totalMasuk, borderColor: "blue", fill: false },
+            { label: "Order Selesai", data: totalSelesai, borderColor: "green", fill: false },
+            { label: "Response Time (menit)", data: responseAvg, borderColor: "red", fill: false, yAxisID: "y2" }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: "Jumlah Order" } },
+            y2: { beginAtZero: true, position: "right", title: { display: true, text: "Menit" } }
+          }
+        }
+      });
     });
   }
   filterDate.addEventListener("change", loadReport);
@@ -300,54 +351,4 @@
   }
 
   function hapusMenu(kat,idx){
-    db.ref("menu/"+kat).once("value").then(snap=>{
-      let arr = snap.val()||[];
-      arr.splice(idx,1);
-      db.ref("menu/"+kat).set(arr).then(()=>{
-        alert("Menu dihapus");
-        loadMenuKasir();
-        loadMenuList();
-      });
-    });
-  }
-
-  function ubahHarga(kat,idx){
-    const newPrice = prompt("Masukkan harga baru:");
-    if(!newPrice) return;
-    db.ref("menu/"+kat+"/"+idx+"/price").set(parseInt(newPrice)).then(()=>{
-      alert("Harga diperbarui");
-      loadMenuKasir();
-      loadMenuList();
-    });
-  }
-
-  // showSection
-  function showSection(id) {
-    document.querySelectorAll("main section").forEach(s => s.classList.add("hidden"));
-    document.getElementById(id).classList.remove("hidden");
-    if (id === 'laporan') loadReport();
-    if (id === 'adminMenu') loadMenuList();
-
-    // auto tutup sidebar di HP
-    if (window.innerWidth < 768) {
-      document.getElementById("sidebar").classList.add("-translate-x-full");
-      document.getElementById("overlay").classList.add("hidden");
-    }
-  }
-  showSection('kasir');
-
-  function toggleSidebar() {
-    const sidebar = document.getElementById("sidebar");
-    const overlay = document.getElementById("overlay");
-    const isOpen = !sidebar.classList.contains("-translate-x-full");
-    if (isOpen) {
-      sidebar.classList.add("-translate-x-full");
-      overlay.classList.add("hidden");
-    } else {
-      sidebar.classList.remove("-translate-x-full");
-      overlay.classList.remove("hidden");
-    }
-  }
-</script>
-</body>
-</html>
+    db.ref("menu/"+kat).once
