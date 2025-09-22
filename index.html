@@ -6,322 +6,302 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
-<body class="bg-gray-100">
-
+<body class="bg-gray-100 font-sans">
   <!-- Sidebar -->
-  <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40" onclick="toggleSidebar()"></div>
-  <aside id="sidebar" class="fixed top-0 left-0 w-64 h-full bg-white shadow transform -translate-x-full transition z-50">
-    <div class="p-4 font-bold text-lg">☕ Numpang Ngopi</div>
-    <nav>
-      <button onclick="showSection('kasir');toggleSidebar()" class="block w-full text-left p-3 hover:bg-gray-200">Kasir</button>
-      <button onclick="showSection('antrian');toggleSidebar()" class="block w-full text-left p-3 hover:bg-gray-200">Antrian</button>
-      <button onclick="showSection('laporan');toggleSidebar()" class="block w-full text-left p-3 hover:bg-gray-200">Laporan</button>
-      <button onclick="showSection('adminMenu');toggleSidebar()" class="block w-full text-left p-3 hover:bg-gray-200">Admin Menu</button>
+  <div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-white shadow-lg transform -translate-x-full transition-transform z-40">
+    <div class="p-4 font-bold text-xl border-b">☕ Numpang Ngopi</div>
+    <nav class="p-4 space-y-2">
+      <button onclick="showSection('kasir')" class="w-full text-left px-3 py-2 rounded hover:bg-gray-200">Kasir</button>
+      <button onclick="showSection('antrian')" class="w-full text-left px-3 py-2 rounded hover:bg-gray-200">Antrian</button>
+      <button onclick="showSection('laporan')" class="w-full text-left px-3 py-2 rounded hover:bg-gray-200">Laporan</button>
+      <button onclick="showSection('adminMenu')" class="w-full text-left px-3 py-2 rounded hover:bg-gray-200">Admin Menu</button>
     </nav>
-  </aside>
+  </div>
+  <div id="overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30" onclick="toggleSidebar()"></div>
 
-  <!-- Header -->
-  <header class="bg-white shadow p-4 flex items-center">
-    <button onclick="toggleSidebar()" class="mr-4">☰</button>
-    <h1 class="font-bold text-xl">Dashboard Numpang Ngopi</h1>
+  <!-- Topbar -->
+  <header class="bg-white shadow p-4 flex items-center justify-between">
+    <button onclick="toggleSidebar()" class="p-2 bg-gray-200 rounded">☰</button>
+    <h1 id="sectionTitle" class="font-bold text-lg">Kasir</h1>
   </header>
 
-  <!-- Main Content -->
+  <!-- Main -->
   <main class="p-4">
     <!-- Kasir -->
-    <section id="kasir" class="hidden">
-      <h2 class="text-lg font-bold mb-2">Kasir</h2>
-      <div>
-        <select id="menuKasir" class="border p-2"></select>
-        <input id="qtyKasir" type="number" placeholder="Qty" class="border p-2 w-20">
-        <button onclick="addToCart()" class="bg-blue-500 text-white px-3 py-2 rounded">Tambah</button>
+    <section id="kasir">
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-white p-4 rounded shadow">
+          <h2 class="font-semibold mb-2">Pilih Menu</h2>
+          <select id="menuKasir" class="border p-2 w-full mb-2"></select>
+          <input id="qtyKasir" type="number" placeholder="Jumlah" class="border p-2 w-full mb-2">
+          <button onclick="addToCart()" class="bg-blue-500 text-white px-4 py-2 rounded">Tambah</button>
+        </div>
+        <div class="bg-white p-4 rounded shadow">
+          <h2 class="font-semibold mb-2">Keranjang</h2>
+          <ul id="cartList" class="mb-2"></ul>
+          <p>Total: Rp <span id="totalHarga">0</span></p>
+          <input id="namaPelanggan" type="text" placeholder="Nama pelanggan" class="border p-2 w-full my-2">
+          <input id="bayarKasir" type="number" placeholder="Jumlah bayar" class="border p-2 w-full mb-2">
+          <p>Kembalian: Rp <span id="kembalianKasir">0</span></p>
+          <button onclick="checkout()" class="bg-green-500 text-white px-4 py-2 rounded">Checkout</button>
+        </div>
       </div>
-      <ul id="cartList" class="mt-2"></ul>
-      <div class="mt-2">Total: Rp <span id="totalCart">0</span></div>
-      <input id="namaPelanggan" placeholder="Nama pelanggan" class="border p-2 mt-2 w-full">
-      <input id="bayarKasir" type="number" placeholder="Bayar" class="border p-2 mt-2 w-full">
-      <div>Kembalian: Rp <span id="kembalianKasir">0</span></div>
-      <button onclick="checkout()" class="bg-green-500 text-white px-3 py-2 rounded mt-2">Checkout</button>
     </section>
 
     <!-- Antrian -->
     <section id="antrian" class="hidden">
-      <h2 class="text-lg font-bold mb-2">Antrian</h2>
-      <ul id="orderList"></ul>
+      <div class="bg-white p-4 rounded shadow">
+        <h2 class="font-semibold mb-2">Antrian Pesanan</h2>
+        <ul id="antrianList"></ul>
+      </div>
     </section>
 
     <!-- Laporan -->
     <section id="laporan" class="hidden">
-      <h2 class="text-lg font-bold mb-2">Laporan Harian</h2>
-      <input type="date" id="tanggalLaporan" class="border p-2" onchange="loadReport()">
-      <div id="reportResult" class="mt-3"></div>
-      <canvas id="salesChart" class="mt-4"></canvas>
+      <div class="bg-white p-4 rounded shadow mb-4">
+        <h2 class="font-semibold mb-2">Laporan Harian</h2>
+        <input id="tanggalLaporan" type="date" class="border p-2 mb-2">
+        <button onclick="loadReport()" class="bg-blue-500 text-white px-4 py-2 rounded">Tampilkan</button>
+        <p>Total Transaksi: <span id="totalTransaksi">0</span></p>
+        <p>Omzet: Rp <span id="totalOmzet">0</span></p>
+      </div>
+      <div class="bg-white p-4 rounded shadow">
+        <canvas id="chartLaporan" height="100"></canvas>
+      </div>
     </section>
 
     <!-- Admin Menu -->
     <section id="adminMenu" class="hidden">
-      <h2 class="text-lg font-bold mb-2">Kelola Menu</h2>
-      <div>
-        <input id="menuNama" placeholder="Nama menu" class="border p-2">
-        <input id="menuHarga" type="number" placeholder="Harga" class="border p-2 w-28">
-        <select id="menuKategori" class="border p-2">
-          <option value="coffee">Coffee</option>
-          <option value="noncoffee">Non Coffee</option>
-        </select>
-        <button onclick="tambahMenu()" class="bg-blue-500 text-white px-3 py-2 rounded">Tambah</button>
+      <div class="bg-white p-4 rounded shadow">
+        <h2 class="font-semibold mb-2">Kelola Menu</h2>
+        <input id="namaMenuBaru" type="text" placeholder="Nama menu" class="border p-2 mb-2">
+        <input id="hargaMenuBaru" type="number" placeholder="Harga" class="border p-2 mb-2">
+        <input id="kategoriMenuBaru" type="text" placeholder="Kategori" class="border p-2 mb-2">
+        <button onclick="tambahMenu()" class="bg-green-500 text-white px-4 py-2 rounded mb-4">Tambah</button>
+        <ul id="menuList"></ul>
       </div>
-      <div id="menuList" class="mt-3"></div>
     </section>
   </main>
 
-  <script>
-    // Firebase config (ISI DENGAN PUNYAMU SENDIRI)
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      databaseURL: "YOUR_DB_URL",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_BUCKET",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+<script>
+/* -------------------- Firebase Setup -------------------- */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "SENDER_ID",
+  appId: "APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-    // Global cart
-    let cart = {};
-    let total = 0;
+/* -------------------- Global -------------------- */
+let cart = {};
+let total = 0;
+let chart;
 
-    // --- Kasir ---
-    function addToCart() {
-      let menu = document.getElementById("menuKasir").value;
-      let qty = parseInt(document.getElementById("qtyKasir").value);
-      if (!qty || qty <= 0) return alert("Jumlah tidak valid!");
-      db.ref("menus/" + menu).once("value").then(snapshot => {
-        let item = snapshot.val();
-        if (!item) return alert("Menu tidak ditemukan!");
-        if (!cart[menu]) cart[menu] = { ...item, qty: 0 };
-        cart[menu].qty += qty;
-        renderCart();
+/* -------------------- Kasir -------------------- */
+function loadMenuKasir(){
+  const select = document.getElementById("menuKasir");
+  select.innerHTML = "";
+  db.ref("menu").once("value").then(snap=>{
+    snap.forEach(cat=>{
+      cat.forEach(item=>{
+        let opt=document.createElement("option");
+        opt.value=JSON.stringify({name:item.val().name,price:item.val().price});
+        opt.text=`${item.val().name} - Rp${item.val().price}`;
+        select.appendChild(opt);
       });
-    }
+    });
+  });
+}
 
-    function renderCart() {
-      let list = document.getElementById("cartList");
-      list.innerHTML = "";
-      total = 0;
-      for (let key in cart) {
-        let item = cart[key];
-        total += item.price * item.qty;
-        let li = document.createElement("li");
-        li.textContent = `${item.name} x${item.qty} = Rp${item.price * item.qty}`;
-        list.appendChild(li);
-      }
-      document.getElementById("totalCart").textContent = total;
-      hitungKembalian();
-    }
+function addToCart(){
+  let menu=JSON.parse(document.getElementById("menuKasir").value);
+  let qty=parseInt(document.getElementById("qtyKasir").value);
+  if(!qty||qty<=0)return alert("Jumlah tidak valid!");
+  if(!cart[menu.name]) cart[menu.name]={price:menu.price,qty:0};
+  cart[menu.name].qty+=qty;
+  renderCart();
+}
 
-    function hitungKembalian() {
-      let bayar = parseInt(document.getElementById("bayarKasir").value) || 0;
-      document.getElementById("kembalianKasir").textContent = bayar - total;
-    }
+function renderCart(){
+  const list=document.getElementById("cartList");
+  list.innerHTML=""; total=0;
+  Object.keys(cart).forEach(k=>{
+    let li=document.createElement("li");
+    li.textContent=`${k} x${cart[k].qty} = Rp${cart[k].qty*cart[k].price}`;
+    list.appendChild(li);
+    total+=cart[k].qty*cart[k].price;
+  });
+  document.getElementById("totalHarga").textContent=total;
+}
 
-    function checkout() {
-      let nama = document.getElementById("namaPelanggan").value;
-      if (!nama) return alert("Isi nama pelanggan!");
-      let now = new Date();
-      let jam = now.getHours().toString().padStart(2,"0") + ":" + now.getMinutes().toString().padStart(2,"0");
-      let order = { nama, items: cart, total, waktu: jam, status: "pending", selesai: null };
-      db.ref("orders").push(order).then(() => {
-        alert("Pesanan masuk!");
-        cart = {}; total = 0;
-        renderCart();
-      });
-    }
+document.getElementById("bayarKasir").addEventListener("input",()=>{
+  let bayar=parseInt(document.getElementById("bayarKasir").value)||0;
+  document.getElementById("kembalianKasir").textContent=bayar-total;
+});
 
-    // --- Antrian ---
-    db.ref("orders").on("value", snap => {
-      let data = snap.val();
-      let list = document.getElementById("orderList");
-      list.innerHTML = "";
-      for (let key in data) {
-        let o = data[key];
-        let li = document.createElement("li");
-        li.className = "border p-2 my-1";
-        li.innerHTML = `<b>${o.nama}</b> - Rp${o.total} (${o.status})`;
-        if (o.status === "pending") {
-          let btn = document.createElement("button");
-          btn.textContent = "Selesai";
-          btn.className = "bg-green-500 text-white px-2 py-1 ml-2";
-          btn.onclick = () => selesaiOrder(key);
-          li.appendChild(btn);
-        }
-        list.appendChild(li);
+function checkout(){
+  if(Object.keys(cart).length===0)return alert("Keranjang kosong!");
+  let nama=document.getElementById("namaPelanggan").value||"Umum";
+  let waktu=Date.now();
+  let order={nama,cart,total,status:"proses",waktu};
+  db.ref("orders").push(order).then(()=>{
+    alert("Pesanan masuk!");
+    cart={}; renderCart();
+    document.getElementById("bayarKasir").value="";
+    document.getElementById("kembalianKasir").textContent="0";
+  });
+}
+
+/* -------------------- Antrian -------------------- */
+function loadAntrian(){
+  const list=document.getElementById("antrianList");
+  db.ref("orders").on("value",snap=>{
+    list.innerHTML="";
+    snap.forEach(o=>{
+      let val=o.val();
+      let li=document.createElement("li");
+      li.className="flex justify-between border-b py-1";
+      li.innerHTML=`<span>${val.nama} - Rp${val.total}</span>
+        <button class="bg-green-500 text-white px-2 rounded" onclick="selesaiOrder('${o.key}')">Selesai</button>`;
+      list.appendChild(li);
+    });
+  });
+}
+function selesaiOrder(id){
+  db.ref("orders/"+id).update({status:"selesai",selesai:Date.now()});
+}
+
+/* -------------------- Laporan -------------------- */
+function loadReport(){
+  let tgl=document.getElementById("tanggalLaporan").value;
+  if(!tgl)return alert("Pilih tanggal!");
+  let start=new Date(tgl+"T00:00:00").getTime();
+  let end=new Date(tgl+"T23:59:59").getTime();
+  db.ref("orders").orderByChild("waktu").startAt(start).endAt(end).once("value",snap=>{
+    let totalTrans=0, omzet=0;
+    let perjam={}, selesaiCount={}, resp={};
+    snap.forEach(o=>{
+      let v=o.val();
+      totalTrans++; omzet+=v.total;
+      let jam=new Date(v.waktu).getHours();
+      if(!perjam[jam])perjam[jam]=0;
+      perjam[jam]++;
+      if(v.status==="selesai"&&v.selesai){
+        if(!selesaiCount[jam])selesaiCount[jam]=0;
+        selesaiCount[jam]++;
+        if(!resp[jam])resp[jam]=[];
+        resp[jam].push((v.selesai-v.waktu)/60000);
       }
     });
+    document.getElementById("totalTransaksi").textContent=totalTrans;
+    document.getElementById("totalOmzet").textContent=omzet;
+    renderChart(perjam,selesaiCount,resp);
+  });
+}
 
-    function selesaiOrder(key) {
-      db.ref("orders/" + key).update({ status: "done", selesai: new Date().toISOString() });
+function renderChart(order,selesai,resp){
+  let ctx=document.getElementById("chartLaporan").getContext("2d");
+  if(chart)chart.destroy();
+  let labels=[...Array(24).keys()].map(h=>h+":00");
+  let dataOrder=labels.map((_,i)=>order[i]||0);
+  let dataSelesai=labels.map((_,i)=>selesai[i]||0);
+  let dataResp=labels.map((_,i)=>{
+    if(resp[i])return resp[i].reduce((a,b)=>a+b,0)/resp[i].length;
+    return 0;
+  });
+  chart=new Chart(ctx,{
+    type:"line",
+    data:{
+      labels,
+      datasets:[
+        {label:"Total Order",data:dataOrder,borderColor:"blue",fill:false},
+        {label:"Total Selesai",data:dataSelesai,borderColor:"green",fill:false},
+        {label:"Response Time (menit)",data:dataResp,borderColor:"red",fill:false}
+      ]
     }
+  });
+}
 
-    // --- Laporan ---
-    function loadReport() {
-      let tanggal = document.getElementById("tanggalLaporan").value;
-      db.ref("orders").once("value").then(snap => {
-        let data = snap.val();
-        if (!data) return;
-        let totalOrder = 0, totalSelesai = 0, omzet = 0;
-        let jamLabels = [], dataOrder = [], dataSelesai = [], dataResp = [];
-
-        for (let jam=0; jam<24; jam++) {
-          let lbl = jam.toString().padStart(2,"0")+":00";
-          jamLabels.push(lbl);
-          let oCount=0, sCount=0, respTime=0, respN=0;
-          for (let key in data) {
-            let o = data[key];
-            if (o.waktu && o.waktu.startsWith(jam.toString().padStart(2,"0"))) {
-              oCount++;
-              totalOrder++;
-              omzet += o.total;
-              if (o.status === "done") {
-                sCount++; totalSelesai++;
-                if (o.selesai) {
-                  let start = new Date();
-                  start.setHours(parseInt(o.waktu.split(":")[0]));
-                  start.setMinutes(parseInt(o.waktu.split(":")[1]));
-                  let end = new Date(o.selesai);
-                  let diff = (end - start)/60000;
-                  respTime += diff; respN++;
-                }
-              }
-            }
-          }
-          dataOrder.push(oCount);
-          dataSelesai.push(sCount);
-          dataResp.push(respN? (respTime/respN).toFixed(1):0);
-        }
-
-        document.getElementById("reportResult").innerHTML = `
-          Total Order: ${totalOrder}<br>
-          Total Selesai: ${totalSelesai}<br>
-          Omzet: Rp${omzet}
-        `;
-
-        let ctx = document.getElementById("salesChart").getContext("2d");
-        if (window.salesChartInstance) window.salesChartInstance.destroy();
-        window.salesChartInstance = new Chart(ctx, {
-          type: "line",
-          data: {
-            labels: jamLabels,
-            datasets: [
-              { label:"Total Order", data:dataOrder, borderColor:"blue", fill:false },
-              { label:"Total Selesai", data:dataSelesai, borderColor:"green", fill:false },
-              { label:"Resp Time (mnt)", data:dataResp, borderColor:"red", fill:false, yAxisID:"y1" }
-            ]
-          },
-          options: {
-            responsive:true,
-            interaction:{ mode:"index" },
-            stacked:false,
-            scales:{
-              y:{ beginAtZero:true },
-              y1:{ beginAtZero:true, position:"right", grid:{ drawOnChartArea:false } }
-            }
-          }
-        });
+/* -------------------- Admin Menu -------------------- */
+function tambahMenu(){
+  let nama=document.getElementById("namaMenuBaru").value;
+  let harga=parseInt(document.getElementById("hargaMenuBaru").value);
+  let kategori=document.getElementById("kategoriMenuBaru").value||"lainnya";
+  if(!nama||!harga)return alert("Isi nama & harga!");
+  db.ref("menu/"+kategori).once("value").then(snap=>{
+    let arr=snap.val()||[];
+    arr.push({name:nama,price:harga});
+    db.ref("menu/"+kategori).set(arr).then(()=>{
+      alert("Menu ditambahkan!");
+      loadMenuKasir(); loadMenuList();
+    });
+  });
+}
+function loadMenuList(){
+  const list=document.getElementById("menuList"); list.innerHTML="";
+  db.ref("menu").once("value").then(snap=>{
+    snap.forEach(cat=>{
+      cat.forEach((item,idx)=>{
+        let li=document.createElement("li");
+        li.className="flex justify-between border-b py-1";
+        li.innerHTML=`<span>${item.val().name} - Rp${item.val().price}</span>
+          <div>
+            <button class="bg-yellow-500 text-white px-2 rounded" onclick="ubahHarga('${cat.key}',${idx})">Ubah</button>
+            <button class="bg-red-500 text-white px-2 rounded" onclick="hapusMenu('${cat.key}',${idx})">Hapus</button>
+          </div>`;
+        list.appendChild(li);
+      });
+    });
+  });
+}
+function hapusMenu(kat,idx){
+  db.ref("menu/"+kat).once("value").then(snap=>{
+    let arr=snap.val()||[]; arr.splice(idx,1);
+    db.ref("menu/"+kat).set(arr).then(()=>{
+      alert("Menu dihapus!"); loadMenuKasir(); loadMenuList();
+    });
+  });
+}
+function ubahHarga(kat,idx){
+  const newHarga=prompt("Harga baru:");
+  if(!newHarga)return;
+  db.ref("menu/"+kat).once("value").then(snap=>{
+    let arr=snap.val()||[];
+    if(arr[idx]){arr[idx].price=parseInt(newHarga);
+      db.ref("menu/"+kat).set(arr).then(()=>{
+        alert("Harga diperbarui!"); loadMenuKasir(); loadMenuList();
       });
     }
+  });
+}
 
-    // --- Admin Menu ---
-    function tambahMenu() {
-      let nama=document.getElementById("menuNama").value;
-      let harga=parseInt(document.getElementById("menuHarga").value);
-      let kategori=document.getElementById("menuKategori").value;
-      if (!nama || !harga) return alert("Lengkapi nama & harga!");
-      db.ref("menu/"+kategori).once("value").then(snap=>{
-        let arr=snap.val()||[];
-        arr.push({name:nama,price:harga});
-        db.ref("menu/"+kategori).set(arr).then(()=>{
-          alert("Menu ditambah!");
-          loadMenuList();
-        });
-      });
-    }
+/* -------------------- Navigasi -------------------- */
+function showSection(id){
+  document.querySelectorAll("main section").forEach(sec=>sec.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+  document.getElementById("sectionTitle").textContent=id.charAt(0).toUpperCase()+id.slice(1);
+  if(id==="laporan")loadReport();
+  if(id==="adminMenu")loadMenuList();
+}
+function toggleSidebar(){
+  const sidebar=document.getElementById("sidebar");
+  const overlay=document.getElementById("overlay");
+  sidebar.classList.toggle("-translate-x-full");
+  overlay.classList.toggle("hidden");
+}
 
-    function loadMenuList(){
-      let div=document.getElementById("menuList");
-      div.innerHTML="";
-      ["coffee","noncoffee"].forEach(kat=>{
-        db.ref("menu/"+kat).once("value").then(snap=>{
-          let arr=snap.val()||[];
-          let h=document.createElement("h3");
-          h.className="font-bold mt-2";
-          h.textContent=kat;
-          div.appendChild(h);
-          arr.forEach((m,idx)=>{
-            let d=document.createElement("div");
-            d.className="flex justify-between border p-1";
-            d.innerHTML=`${m.name} - Rp${m.price}
-              <span>
-                <button onclick="ubahHarga('${kat}',${idx})" class="text-blue-500">Ubah</button>
-                <button onclick="hapusMenu('${kat}',${idx})" class="text-red-500 ml-2">Hapus</button>
-              </span>`;
-            div.appendChild(d);
-          });
-        });
-      });
-    }
-
-    function hapusMenu(kat, idx) {
-      db.ref("menu/" + kat).once("value").then(snap => {
-        let arr = snap.val() || [];
-        arr.splice(idx, 1);
-        db.ref("menu/" + kat).set(arr).then(() => {
-          alert("Menu dihapus!");
-          loadMenuList();
-        });
-      });
-    }
-
-    function ubahHarga(kat, idx) {
-      const newHarga = prompt("Masukkan harga baru:");
-      if (!newHarga) return;
-      db.ref("menu/" + kat).once("value").then(snap => {
-        let arr = snap.val() || [];
-        if (arr[idx]) {
-          arr[idx].price = parseInt(newHarga);
-          db.ref("menu/" + kat).set(arr).then(() => {
-            alert("Harga diperbarui!");
-            loadMenuList();
-          });
-        }
-      });
-    }
-
-    // --- Navigasi ---
-    function showSection(id){
-      document.querySelectorAll("main section").forEach(sec=>sec.classList.add("hidden"));
-      document.getElementById(id).classList.remove("hidden");
-      if (id==="laporan") loadReport();
-      if (id==="adminMenu") loadMenuList();
-    }
-    function toggleSidebar(){
-      const sidebar=document.getElementById("sidebar");
-      const overlay=document.getElementById("overlay");
-      if(sidebar.classList.contains("-translate-x-full")){
-        sidebar.classList.remove("-translate-x-full"); overlay.classList.remove("hidden");
-      } else {
-        sidebar.classList.add("-translate-x-full"); overlay.classList.add("hidden");
-      }
-    }
-
-    // Default buka kasir
-    showSection("kasir");
-  </script>
+/* -------------------- Init -------------------- */
+loadMenuKasir();
+loadAntrian();
+showSection("kasir");
+</script>
 </body>
 </html>
