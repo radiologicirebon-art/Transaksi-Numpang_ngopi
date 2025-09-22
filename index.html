@@ -61,9 +61,8 @@
             <h3 class="text-xl font-bold mb-2">Keranjang</h3>
             <ul id="cartList" class="space-y-2"></ul>
             <p class="mt-3 font-bold">Total: Rp <span id="cartTotal">0</span></p>
-            <div class="grid md:grid-cols-3 gap-4 mt-4">
+            <div class="grid md:grid-cols-2 gap-4 mt-4">
               <input type="number" id="payment" placeholder="Bayar" class="p-2 border rounded">
-              <input type="text" id="waNumber" placeholder="Nomor WhatsApp (628...)" class="p-2 border rounded">
               <button onclick="checkout()" class="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700">Checkout</button>
             </div>
             <p class="mt-2 text-sm text-gray-500">Kembalian: Rp <span id="change">0</span></p>
@@ -122,7 +121,6 @@
 
   let cart = {};
   let total = 0;
-
   const menuKasir = document.getElementById("menuKasir");
 
   // --- Ambil menu untuk dropdown kasir ---
@@ -168,12 +166,16 @@
     document.getElementById("cartTotal").textContent = total;
   }
 
+  // Hitung kembalian otomatis
+  document.getElementById("payment").addEventListener("input", () => {
+    const bayar = parseInt(document.getElementById("payment").value) || 0;
+    document.getElementById("change").textContent = bayar - total > 0 ? bayar - total : 0;
+  });
+
   async function checkout() {
     if (total <= 0) return alert("Keranjang kosong!");
     let bayar = parseInt(document.getElementById("payment").value);
     if (!bayar || bayar < total) return alert("Pembayaran kurang!");
-    let phone = document.getElementById("waNumber").value.trim();
-    if (!phone) return alert("Masukkan nomor WhatsApp pelanggan!");
 
     const snap = await db.ref("orders").orderByChild("noUrut").limitToLast(1).get();
     let last = 0;
@@ -198,13 +200,15 @@
     struk += "---------------------\n";
     struk += `Total: Rp${total}\nBayar: Rp${bayar}\nKembali: Rp${bayar - total}\n`;
     struk += "=====================\nTerima kasih! #KopibeneranKopi";
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(struk)}`, "_blank");
+
+    // kirim WA ke admin
+    let adminPhone = "628984290300";
+    window.open(`https://wa.me/${adminPhone}?text=${encodeURIComponent(struk)}`, "_blank");
 
     cart = {};
     updateCart();
     document.getElementById("payment").value = "";
-    document.getElementById("waNumber").value = "";
-    alert("Pesanan dikirim ke Barista!");
+    alert("Pesanan dikirim ke Barista & Admin!");
   }
 
   // --- Realtime Antrian ---
