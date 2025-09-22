@@ -1,307 +1,261 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Numpang Ngopi CRB</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Numpang Ngopi — Pesan Online</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    #invoiceModal .bg-white {
+      animation: scaleIn .3s ease;
+    }
+    @keyframes scaleIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+  </style>
 </head>
-<body class="bg-gray-100 font-sans">
-  <!-- Sidebar -->
-  <div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-white shadow-lg transform -translate-x-full transition-transform z-40">
-    <div class="p-4 font-bold text-xl border-b">☕ Numpang Ngopi</div>
-    <nav class="p-4 space-y-2">
-      <button onclick="showSection('kasir')" class="w-full text-left px-3 py-2 rounded hover:bg-gray-200">Kasir</button>
-      <button onclick="showSection('antrian')" class="w-full text-left px-3 py-2 rounded hover:bg-gray-200">Antrian</button>
-      <button onclick="showSection('laporan')" class="w-full text-left px-3 py-2 rounded hover:bg-gray-200">Laporan</button>
-      <button onclick="showSection('adminMenu')" class="w-full text-left px-3 py-2 rounded hover:bg-gray-200">Admin Menu</button>
-    </nav>
-  </div>
-  <div id="overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30" onclick="toggleSidebar()"></div>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
 
-  <!-- Topbar -->
-  <header class="bg-white shadow p-4 flex items-center justify-between">
-    <button onclick="toggleSidebar()" class="p-2 bg-gray-200 rounded">☰</button>
-    <h1 id="sectionTitle" class="font-bold text-lg">Kasir</h1>
+  <!-- Header -->
+  <header class="bg-gradient-to-r from-yellow-500 to-amber-600 text-white p-4 shadow">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <h1 class="text-lg font-bold tracking-wide">☕ Numpang Ngopi • Mangkal's • Cirebon</h1>
+      <div class="text-sm">Pesan via WhatsApp otomatis</div>
+    </div>
   </header>
 
   <!-- Main -->
-  <main class="p-4">
-    <!-- Kasir -->
-    <section id="kasir">
-      <div class="grid md:grid-cols-2 gap-4">
-        <div class="bg-white p-4 rounded shadow">
-          <h2 class="font-semibold mb-2">Pilih Menu</h2>
-          <select id="menuKasir" class="border p-2 w-full mb-2"></select>
-          <input id="qtyKasir" type="number" placeholder="Jumlah" class="border p-2 w-full mb-2">
-          <button onclick="addToCart()" class="bg-blue-500 text-white px-4 py-2 rounded">Tambah</button>
+  <main class="flex-1 max-w-4xl mx-auto p-6 w-full">
+    <section class="grid md:grid-cols-2 gap-6">
+
+      <!-- Menu -->
+      <div class="space-y-6">
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold text-lg mb-3">Coffee</h2>
+          <div id="coffeeList" class="space-y-3"></div>
         </div>
-        <div class="bg-white p-4 rounded shadow">
-          <h2 class="font-semibold mb-2">Keranjang</h2>
-          <ul id="cartList" class="mb-2"></ul>
-          <p>Total: Rp <span id="totalHarga">0</span></p>
-          <input id="namaPelanggan" type="text" placeholder="Nama pelanggan" class="border p-2 w-full my-2">
-          <input id="bayarKasir" type="number" placeholder="Jumlah bayar" class="border p-2 w-full mb-2">
-          <p>Kembalian: Rp <span id="kembalianKasir">0</span></p>
-          <button onclick="checkout()" class="bg-green-500 text-white px-4 py-2 rounded">Checkout</button>
+
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold text-lg mb-3">Non Coffee</h2>
+          <div id="noncoffeeList" class="space-y-3"></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold text-lg mb-3">Add-ons</h2>
+          <div id="addonsList" class="space-y-3"></div>
         </div>
       </div>
-    </section>
 
-    <!-- Antrian -->
-    <section id="antrian" class="hidden">
-      <div class="bg-white p-4 rounded shadow">
-        <h2 class="font-semibold mb-2">Antrian Pesanan</h2>
-        <ul id="antrianList"></ul>
-      </div>
-    </section>
+      <!-- Cart -->
+      <div class="bg-white rounded-xl shadow p-4 sticky top-6">
+        <h2 class="font-semibold text-lg mb-3">Keranjang</h2>
 
-    <!-- Laporan -->
-    <section id="laporan" class="hidden">
-      <div class="bg-white p-4 rounded shadow mb-4">
-        <h2 class="font-semibold mb-2">Laporan Harian</h2>
-        <input id="tanggalLaporan" type="date" class="border p-2 mb-2">
-        <button onclick="loadReport()" class="bg-blue-500 text-white px-4 py-2 rounded">Tampilkan</button>
-        <p>Total Transaksi: <span id="totalTransaksi">0</span></p>
-        <p>Omzet: Rp <span id="totalOmzet">0</span></p>
-      </div>
-      <div class="bg-white p-4 rounded shadow">
-        <canvas id="chartLaporan" height="100"></canvas>
-      </div>
-    </section>
+        <div id="cartItems" class="space-y-3 mb-4">
+          <p class="text-sm text-gray-500">Belum ada item.</p>
+        </div>
 
-    <!-- Admin Menu -->
-    <section id="adminMenu" class="hidden">
-      <div class="bg-white p-4 rounded shadow">
-        <h2 class="font-semibold mb-2">Kelola Menu</h2>
-        <input id="namaMenuBaru" type="text" placeholder="Nama menu" class="border p-2 mb-2">
-        <input id="hargaMenuBaru" type="number" placeholder="Harga" class="border p-2 mb-2">
-        <input id="kategoriMenuBaru" type="text" placeholder="Kategori" class="border p-2 mb-2">
-        <button onclick="tambahMenu()" class="bg-green-500 text-white px-4 py-2 rounded mb-4">Tambah</button>
-        <ul id="menuList"></ul>
+        <div class="border-t pt-3">
+          <div class="flex justify-between text-gray-600">
+            <div>Subtotal</div>
+            <div id="subtotalText">Rp 0</div>
+          </div>
+          <div class="flex justify-between text-gray-600 mt-2">
+            <div>Biaya layanan</div>
+            <div id="feeText">Rp 0</div>
+          </div>
+          <div class="flex justify-between font-bold text-lg mt-3">
+            <div>Total</div>
+            <div id="totalText">Rp 0</div>
+          </div>
+        </div>
+
+        <div class="mt-4 space-y-2">
+          <input id="customerName" placeholder="Nama pemesan" class="w-full p-2 border rounded" />
+          <input id="customerNote" placeholder="Catatan / alamat (opsional)" class="w-full p-2 border rounded" />
+        </div>
+
+        <div class="mt-4 flex gap-2">
+          <button id="saveBtn" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Simpan & Kirim WA</button>
+          <button id="clearBtn" class="px-3 py-2 bg-gray-200 rounded">Bersihkan</button>
+        </div>
+
+        <p class="text-xs text-gray-500 mt-3">Pesanan akan tersimpan ke Firebase lalu tampil invoice sebelum ke WhatsApp.</p>
       </div>
+
     </section>
   </main>
 
+  <!-- Footer -->
+  <footer class="bg-gray-100 text-center text-sm text-gray-600 py-3">
+    © Numpang Ngopi • Mangkal's
+  </footer>
+
+  <!-- Modal Invoice -->
+  <div id="invoiceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
+      <h3 class="text-lg font-semibold mb-4">Invoice Pesanan</h3>
+      <div id="invoiceContent" class="mb-4 text-sm"></div>
+      <div class="flex justify-end gap-2">
+        <button id="cancelInvoice" class="px-4 py-2 bg-gray-200 rounded">Batal</button>
+        <button id="confirmInvoice" class="px-4 py-2 bg-green-600 text-white rounded">Konfirmasi & Kirim WA</button>
+      </div>
+    </div>
+  </div>
+
 <script>
-/* -------------------- Firebase Setup -------------------- */
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID"
+const FIREBASE_URL = "https://numpang-ngopi-crb-2c1b7-default-rtdb.firebaseio.com";
+const WA_NUMBER = "628984290300"; // 08984290300 -> wa.me format
+const SERVICE_FEE = 0;
+
+const MENU = {
+  coffee: [
+    { id: "kopi_susu_gula_aren", name: "kopi susu gula aren", price: 8000 },
+    { id: "kopi_susu_latte", name: "kopi susu latte", price: 8000 },
+    { id: "americano", name: "Americano", price: 6000 },
+    { id: "capuchino", name: "capuchino", price: 10000 },
+    { id: "taro_coffe", name: "taro coffe", price: 10000 }
+  ],
+  noncoffee: [
+    { id: "taro_latte", name: "taro latte", price: 8000 },
+    { id: "coklat_latte", name: "coklat latte", price: 8000 },
+    { id: "redvelvet_latte", name: "redvelvet latte", price: 8000 }
+  ],
+  addons: [
+    { id: "creamy", name: "Creamy", price: 1000 },
+    { id: "aren", name: "Aren", price: 1000 },
+    { id: "es_batu", name: "Es Batu", price: 100 }
+  ]
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
 
-/* -------------------- Global -------------------- */
 let cart = {};
-let total = 0;
-let chart;
+function formatIDR(n){return "Rp "+n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,".");}
 
-/* -------------------- Kasir -------------------- */
-function loadMenuKasir(){
-  const select = document.getElementById("menuKasir");
-  select.innerHTML = "";
-  db.ref("menu").once("value").then(snap=>{
-    snap.forEach(cat=>{
-      cat.forEach(item=>{
-        let opt=document.createElement("option");
-        opt.value=JSON.stringify({name:item.val().name,price:item.val().price});
-        opt.text=`${item.val().name} - Rp${item.val().price}`;
-        select.appendChild(opt);
-      });
-    });
-  });
+function createMenuList(){
+  MENU.coffee.forEach(it=>document.getElementById("coffeeList").appendChild(createRow(it)));
+  MENU.noncoffee.forEach(it=>document.getElementById("noncoffeeList").appendChild(createRow(it)));
+  MENU.addons.forEach(it=>document.getElementById("addonsList").appendChild(createRow(it,true)));
 }
 
-function addToCart(){
-  let menu=JSON.parse(document.getElementById("menuKasir").value);
-  let qty=parseInt(document.getElementById("qtyKasir").value);
-  if(!qty||qty<=0)return alert("Jumlah tidak valid!");
-  if(!cart[menu.name]) cart[menu.name]={price:menu.price,qty:0};
-  cart[menu.name].qty+=qty;
-  renderCart();
+function createRow(item,isAddon=false){
+  const wrap=document.createElement("div");
+  wrap.className="flex items-center justify-between bg-gray-50 hover:bg-gray-100 rounded-lg p-2 transition";
+  wrap.innerHTML=`
+    <div>
+      <div class="font-medium">${item.name}</div>
+      <div class="text-sm text-amber-600">${formatIDR(item.price)}</div>
+    </div>
+    <input type="number" min="0" value="0" class="w-16 p-2 border rounded text-center focus:ring-2 focus:ring-amber-500" />
+  `;
+  const input=wrap.querySelector("input");
+  input.oninput=()=>{
+    const q=parseInt(input.value)||0;
+    if(q<=0){delete cart[item.id];}
+    else{cart[item.id]={...item,qty:q,addon:isAddon};}
+    renderCart();
+  };
+  return wrap;
 }
 
 function renderCart(){
-  const list=document.getElementById("cartList");
-  list.innerHTML=""; total=0;
-  Object.keys(cart).forEach(k=>{
-    let li=document.createElement("li");
-    li.textContent=`${k} x${cart[k].qty} = Rp${cart[k].qty*cart[k].price}`;
-    list.appendChild(li);
-    total+=cart[k].qty*cart[k].price;
-  });
-  document.getElementById("totalHarga").textContent=total;
-}
-
-document.getElementById("bayarKasir").addEventListener("input",()=>{
-  let bayar=parseInt(document.getElementById("bayarKasir").value)||0;
-  document.getElementById("kembalianKasir").textContent=bayar-total;
-});
-
-function checkout(){
-  if(Object.keys(cart).length===0)return alert("Keranjang kosong!");
-  let nama=document.getElementById("namaPelanggan").value||"Umum";
-  let waktu=Date.now();
-  let order={nama,cart,total,status:"proses",waktu};
-  db.ref("orders").push(order).then(()=>{
-    alert("Pesanan masuk!");
-    cart={}; renderCart();
-    document.getElementById("bayarKasir").value="";
-    document.getElementById("kembalianKasir").textContent="0";
-  });
-}
-
-/* -------------------- Antrian -------------------- */
-function loadAntrian(){
-  const list=document.getElementById("antrianList");
-  db.ref("orders").on("value",snap=>{
-    list.innerHTML="";
-    snap.forEach(o=>{
-      let val=o.val();
-      let li=document.createElement("li");
-      li.className="flex justify-between border-b py-1";
-      li.innerHTML=`<span>${val.nama} - Rp${val.total}</span>
-        <button class="bg-green-500 text-white px-2 rounded" onclick="selesaiOrder('${o.key}')">Selesai</button>`;
-      list.appendChild(li);
+  const div=document.getElementById("cartItems");
+  div.innerHTML="";
+  const items=Object.values(cart);
+  if(!items.length){div.innerHTML="<p class='text-sm text-gray-500'>Belum ada item.</p>";}
+  else{
+    items.forEach(it=>{
+      const row=document.createElement("div");
+      row.className="flex items-center justify-between p-2 border rounded";
+      row.innerHTML=`
+        <div>
+          <div class="font-medium">${it.name}${it.addon?" (Add-on)":""}</div>
+          <div class="text-sm text-gray-500">x${it.qty} • ${formatIDR(it.price)}</div>
+        </div>
+      `;
+      div.appendChild(row);
     });
-  });
-}
-function selesaiOrder(id){
-  db.ref("orders/"+id).update({status:"selesai",selesai:Date.now()});
-}
-
-/* -------------------- Laporan -------------------- */
-function loadReport(){
-  let tgl=document.getElementById("tanggalLaporan").value;
-  if(!tgl)return alert("Pilih tanggal!");
-  let start=new Date(tgl+"T00:00:00").getTime();
-  let end=new Date(tgl+"T23:59:59").getTime();
-  db.ref("orders").orderByChild("waktu").startAt(start).endAt(end).once("value",snap=>{
-    let totalTrans=0, omzet=0;
-    let perjam={}, selesaiCount={}, resp={};
-    snap.forEach(o=>{
-      let v=o.val();
-      totalTrans++; omzet+=v.total;
-      let jam=new Date(v.waktu).getHours();
-      if(!perjam[jam])perjam[jam]=0;
-      perjam[jam]++;
-      if(v.status==="selesai"&&v.selesai){
-        if(!selesaiCount[jam])selesaiCount[jam]=0;
-        selesaiCount[jam]++;
-        if(!resp[jam])resp[jam]=[];
-        resp[jam].push((v.selesai-v.waktu)/60000);
-      }
-    });
-    document.getElementById("totalTransaksi").textContent=totalTrans;
-    document.getElementById("totalOmzet").textContent=omzet;
-    renderChart(perjam,selesaiCount,resp);
-  });
+  }
+  const t=computeTotals();
+  document.getElementById("subtotalText").textContent=formatIDR(t.subtotal);
+  document.getElementById("feeText").textContent=formatIDR(t.fee);
+  document.getElementById("totalText").textContent=formatIDR(t.total);
 }
 
-function renderChart(order,selesai,resp){
-  let ctx=document.getElementById("chartLaporan").getContext("2d");
-  if(chart)chart.destroy();
-  let labels=[...Array(24).keys()].map(h=>h+":00");
-  let dataOrder=labels.map((_,i)=>order[i]||0);
-  let dataSelesai=labels.map((_,i)=>selesai[i]||0);
-  let dataResp=labels.map((_,i)=>{
-    if(resp[i])return resp[i].reduce((a,b)=>a+b,0)/resp[i].length;
-    return 0;
-  });
-  chart=new Chart(ctx,{
-    type:"line",
-    data:{
-      labels,
-      datasets:[
-        {label:"Total Order",data:dataOrder,borderColor:"blue",fill:false},
-        {label:"Total Selesai",data:dataSelesai,borderColor:"green",fill:false},
-        {label:"Response Time (menit)",data:dataResp,borderColor:"red",fill:false}
-      ]
-    }
-  });
+function computeTotals(){
+  let subtotal=0;
+  Object.values(cart).forEach(it=>subtotal+=it.price*it.qty);
+  return {subtotal,fee:SERVICE_FEE,total:subtotal+SERVICE_FEE};
 }
 
-/* -------------------- Admin Menu -------------------- */
-function tambahMenu(){
-  let nama=document.getElementById("namaMenuBaru").value;
-  let harga=parseInt(document.getElementById("hargaMenuBaru").value);
-  let kategori=document.getElementById("kategoriMenuBaru").value||"lainnya";
-  if(!nama||!harga)return alert("Isi nama & harga!");
-  db.ref("menu/"+kategori).once("value").then(snap=>{
-    let arr=snap.val()||[];
-    arr.push({name:nama,price:harga});
-    db.ref("menu/"+kategori).set(arr).then(()=>{
-      alert("Menu ditambahkan!");
-      loadMenuKasir(); loadMenuList();
-    });
+// ===== Modal Invoice =====
+const modal=document.getElementById("invoiceModal");
+const content=document.getElementById("invoiceContent");
+const confirmBtn=document.getElementById("confirmInvoice");
+const cancelBtn=document.getElementById("cancelInvoice");
+
+function showInvoice(order,id){
+  let html=`<p><b>Nama:</b> ${order.customerName}</p>`;
+  if(order.customerNote)html+=`<p><b>Catatan:</b> ${order.customerNote}</p>`;
+  html+=`<table class="w-full mt-3 border text-sm"><thead><tr class="bg-gray-100">
+    <th class="border px-2 py-1 text-left">Item</th>
+    <th class="border px-2 py-1">Qty</th>
+    <th class="border px-2 py-1">Harga</th></tr></thead><tbody>`;
+  order.items.forEach(it=>{
+    html+=`<tr>
+      <td class="border px-2 py-1">${it.name}${it.addon?" (Add-on)":""}</td>
+      <td class="border px-2 py-1 text-center">${it.qty}</td>
+      <td class="border px-2 py-1 text-right">${formatIDR(it.price*it.qty)}</td>
+    </tr>`;
   });
-}
-function loadMenuList(){
-  const list=document.getElementById("menuList"); list.innerHTML="";
-  db.ref("menu").once("value").then(snap=>{
-    snap.forEach(cat=>{
-      cat.forEach((item,idx)=>{
-        let li=document.createElement("li");
-        li.className="flex justify-between border-b py-1";
-        li.innerHTML=`<span>${item.val().name} - Rp${item.val().price}</span>
-          <div>
-            <button class="bg-yellow-500 text-white px-2 rounded" onclick="ubahHarga('${cat.key}',${idx})">Ubah</button>
-            <button class="bg-red-500 text-white px-2 rounded" onclick="hapusMenu('${cat.key}',${idx})">Hapus</button>
-          </div>`;
-        list.appendChild(li);
-      });
-    });
-  });
-}
-function hapusMenu(kat,idx){
-  db.ref("menu/"+kat).once("value").then(snap=>{
-    let arr=snap.val()||[]; arr.splice(idx,1);
-    db.ref("menu/"+kat).set(arr).then(()=>{
-      alert("Menu dihapus!"); loadMenuKasir(); loadMenuList();
-    });
-  });
-}
-function ubahHarga(kat,idx){
-  const newHarga=prompt("Harga baru:");
-  if(!newHarga)return;
-  db.ref("menu/"+kat).once("value").then(snap=>{
-    let arr=snap.val()||[];
-    if(arr[idx]){arr[idx].price=parseInt(newHarga);
-      db.ref("menu/"+kat).set(arr).then(()=>{
-        alert("Harga diperbarui!"); loadMenuKasir(); loadMenuList();
-      });
-    }
-  });
+  html+=`</tbody><tfoot>
+    <tr><td colspan="2" class="border px-2 py-1 text-right font-bold">Subtotal</td><td class="border px-2 py-1 text-right">${formatIDR(order.subtotal)}</td></tr>
+    <tr><td colspan="2" class="border px-2 py-1 text-right font-bold">Total</td><td class="border px-2 py-1 text-right">${formatIDR(order.total)}</td></tr>
+  </tfoot></table>`;
+  if(id)html+=`<p class="mt-2 text-xs text-gray-500">ID Pesanan: ${id}</p>`;
+  content.innerHTML=html;
+  modal.classList.remove("hidden");modal.classList.add("flex");
+  confirmBtn.onclick=()=>sendWA(order,id);
+  cancelBtn.onclick=()=>{modal.classList.add("hidden");modal.classList.remove("flex");};
 }
 
-/* -------------------- Navigasi -------------------- */
-function showSection(id){
-  document.querySelectorAll("main section").forEach(sec=>sec.classList.add("hidden"));
-  document.getElementById(id).classList.remove("hidden");
-  document.getElementById("sectionTitle").textContent=id.charAt(0).toUpperCase()+id.slice(1);
-  if(id==="laporan")loadReport();
-  if(id==="adminMenu")loadMenuList();
-}
-function toggleSidebar(){
-  const sidebar=document.getElementById("sidebar");
-  const overlay=document.getElementById("overlay");
-  sidebar.classList.toggle("-translate-x-full");
-  overlay.classList.toggle("hidden");
+// ===== Save + Invoice =====
+async function saveAndSend(){
+  const name=document.getElementById("customerName").value.trim();
+  if(!name)return alert("Isi nama pemesan.");
+  const note=document.getElementById("customerNote").value.trim();
+  const items=Object.values(cart);
+  if(!items.length)return alert("Keranjang kosong.");
+  const totals=computeTotals();
+  const order={customerName:name,customerNote:note,items,subtotal:totals.subtotal,fee:totals.fee,total:totals.total,createdAt:Date.now(),status:"new"};
+  try{
+    const res=await fetch(`${FIREBASE_URL}/orders.json`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(order)});
+    const data=await res.json();
+    showInvoice(order,data?.name);
+  }catch(e){console.error(e);alert("Gagal simpan pesanan.");}
 }
 
-/* -------------------- Init -------------------- */
-loadMenuKasir();
-loadAntrian();
-showSection("kasir");
+function sendWA(order,id){
+  let msg=`Halo saya ingin pesan:%0ANama: ${encodeURIComponent(order.customerName)}%0A`;
+  if(order.customerNote)msg+=`Catatan: ${encodeURIComponent(order.customerNote)}%0A`;
+  msg+=`%0APesanan:%0A`;
+  order.items.forEach(it=>{msg+=`${encodeURIComponent(it.name)} x${it.qty} = ${encodeURIComponent(formatIDR(it.price*it.qty))}%0A`;});
+  msg+=`%0ASubtotal: ${encodeURIComponent(formatIDR(order.subtotal))}%0ATotal: ${encodeURIComponent(formatIDR(order.total))}%0A`;
+  if(id)msg+=`ID Pesanan: ${encodeURIComponent(id)}%0A`;
+  msg+=`%0A(Terima kasih)`;
+  window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`,"_blank");
+  cart={};renderCart();
+  document.querySelectorAll("input[type='number']").forEach(i=>i.value=0);
+  document.getElementById("customerNote").value="";document.getElementById("customerName").value="";
+  modal.classList.add("hidden");modal.classList.remove("flex");
+}
+
+document.getElementById("saveBtn").onclick=saveAndSend;
+document.getElementById("clearBtn").onclick=()=>{if(confirm("Hapus semua item?")){cart={};renderCart();document.querySelectorAll("input[type='number']").forEach(i=>i.value=0);}};
+
+// init
+createMenuList();renderCart();
 </script>
 </body>
 </html>
