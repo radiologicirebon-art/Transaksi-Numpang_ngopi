@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
   <title>Numpang Ngopi.crb — Kasir</title>
   <style>
     :root{
@@ -12,41 +12,39 @@
       --muted:#666;
     }
     *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Arial;margin:0;padding:0}
-    body{background:var(--bg);color:#222;padding:18px;}
-    header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-    .brand{
-      display:flex;align-items:center;gap:10px;
-    }
-    .logo{
-      width:46px;height:46px;background:var(--brand);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;
-    }
+    body{background:var(--bg);color:#222;padding:12px;}
+    header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+    .brand{display:flex;align-items:center;gap:10px;}
+    .logo{width:42px;height:42px;background:var(--brand);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;}
     h1{font-size:18px}
     .layout{display:grid;grid-template-columns:1fr 380px;gap:16px}
     @media(max-width:900px){.layout{grid-template-columns:1fr}}
+    @media(max-width:600px){
+      body{padding:8px}
+      .layout{display:flex;flex-direction:column}
+      .card{padding:12px}
+      button.btn,button.ghost{flex:1;font-size:14px}
+    }
     .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
-    /* menu grid */
-    .menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+    .menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
     .menu-item{border:1px solid #eee;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px}
     .mi-top{display:flex;justify-content:space-between;align-items:start}
     .mi-name{font-weight:600}
     .mi-price{font-weight:700;color:var(--brand)}
-    .mi-actions{display:flex;gap:8px}
-    button.btn{background:var(--brand);color:#fff;border:none;padding:8px 10px;border-radius:8px;cursor:pointer}
-    button.ghost{background:transparent;border:1px solid #ddd;padding:6px 8px;border-radius:8px;cursor:pointer}
-    /* cart */
+    .mi-actions{display:flex;gap:6px}
+    button.btn{background:var(--brand);color:#fff;border:none;padding:10px;border-radius:8px;cursor:pointer;font-size:14px}
+    button.ghost{background:transparent;border:1px solid #ddd;padding:8px;border-radius:8px;cursor:pointer;font-size:13px}
     .cart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-    .cart-list{max-height:420px;overflow:auto;display:flex;flex-direction:column;gap:8px;padding-right:6px}
+    .cart-list{max-height:300px;overflow:auto;display:flex;flex-direction:column;gap:8px;padding-right:6px}
     .cart-item{display:flex;gap:8px;align-items:center;border-radius:8px;padding:8px;border:1px solid #f0f0f0}
     .qty{width:46px;text-align:center;border-radius:6px;border:1px solid #eee;padding:6px}
     .small{font-size:13px;color:var(--muted)}
     .total-box{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px dashed #eee}
-    .actions-row{display:flex;gap:8px;margin-top:12px}
-    input[type="number"]{width:100%;}
+    .actions-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+    input,select,textarea{padding:8px;border-radius:8px;border:1px solid #e6e6e6;width:100%}
     .muted{color:var(--muted);font-size:13px}
-    /* add product */
-    .add-product{display:flex;gap:8px;margin-top:10px}
-    input,select,textarea{padding:8px;border-radius:8px;border:1px solid #e6e6e6}
-    .small-btn{padding:6px 8px;border-radius:8px;border:none;cursor:pointer}
+    .add-product{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+    .small-btn{padding:8px;border-radius:8px;border:none;cursor:pointer;font-size:13px}
   </style>
 </head>
 <body>
@@ -63,12 +61,12 @@
   <main class="layout">
     <!-- Menu -->
     <section class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
         <div>
           <strong>Menu</strong>
           <div class="small muted">Pilih produk untuk ditambah ke keranjang</div>
         </div>
-        <div>
+        <div style="display:flex;gap:6px">
           <button class="ghost" id="btnReload">Muat Ulang</button>
           <button class="btn" id="btnOpenAdd">Tambah Produk</button>
         </div>
@@ -76,15 +74,15 @@
 
       <div id="menuGrid" class="menu-grid"></div>
 
-      <!-- add product (quick) -->
+      <!-- Tambah Cepat -->
       <div class="card" style="margin-top:12px">
         <div style="font-weight:600;margin-bottom:8px">Tambah Cepat Produk</div>
         <div class="add-product">
-          <input id="apName" placeholder="Nama produk (contoh: Kopi Susu Aren)" />
+          <input id="apName" placeholder="Nama produk" />
           <input id="apPrice" type="number" placeholder="Harga (contoh: 8000)" />
           <button class="small-btn" id="apAddBtn" style="background:var(--brand);color:#fff">Tambah</button>
         </div>
-        <div class="muted" style="margin-top:8px">Produk cepat hanya tersimpan di session (refresh hilang). Gunakan fitur admin untuk simpan permanen.</div>
+        <div class="muted" style="margin-top:8px">Produk cepat hanya tersimpan di session (refresh hilang).</div>
       </div>
     </section>
 
@@ -92,12 +90,9 @@
     <aside class="card">
       <div class="cart-header">
         <div><strong>Keranjang</strong><div class="small muted" id="cartCount">0 item</div></div>
-        <div><small class="muted" id="shiftInfo">Shift: -</small></div>
       </div>
 
-      <div class="cart-list" id="cartList">
-        <!-- items will show here -->
-      </div>
+      <div class="cart-list" id="cartList"></div>
 
       <div class="total-box">
         <div>Total</div>
@@ -106,7 +101,7 @@
 
       <div style="margin-top:10px">
         <label class="small muted">Pembayar:</label>
-        <input type="number" id="paidAmount" placeholder="Masukkan jumlah bayar" />
+        <input type="number" id="paidAmount" placeholder="Jumlah bayar" />
       </div>
 
       <div style="display:flex;justify-content:space-between;gap:8px;margin-top:8px">
@@ -121,293 +116,107 @@
       </div>
 
       <div class="actions-row">
-        <button class="btn" id="btnSave">Simpan Transaksi</button>
+        <button class="btn" id="btnSave">Simpan</button>
         <button class="ghost" id="btnClear">Bersihkan</button>
         <button class="ghost" id="btnPrint">Cetak Struk</button>
-      </div>
-
-      <div style="margin-top:12px" class="muted">
-        Endpoint Firebase: <code id="dbUrl"></code>
       </div>
     </aside>
   </main>
 
   <script>
-    /********* CONFIG *********/
-    // Ganti jika perlu — gunakan URL Realtime DB project Anda (akhiri tanpa slash)
     const FIREBASE_DB_URL = "https://numpang-ngopi-crb-default-rtdb.asia-southeast1.firebasedatabase.app";
-
-    // Default menu (jika tidak ambil dari database)
     const DEFAULT_MENU = [
-      { id: 'kopi-susu-aren', name: 'Kopi Susu Gula Aren', price: 8000 },
-      { id: 'kopi-susu-latte', name: 'Kopi Susu Latte', price: 8000 },
-      { id: 'americano', name: 'Americano', price: 6000 },
-      { id: 'capuchino', name: 'Capuchino', price: 10000 },
-      { id: 'taro-coffee', name: 'Taro Coffee', price: 10000 },
-      { id: 'taro-latte', name: 'Taro Latte (Non Coffee)', price: 8000 }
+      { id:'kopi-susu-aren', name:'Kopi Susu Gula Aren', price:8000 },
+      { id:'kopi-susu-latte', name:'Kopi Susu Latte', price:8000 },
+      { id:'americano', name:'Americano', price:6000 },
+      { id:'capuchino', name:'Capuchino', price:10000 },
+      { id:'taro-coffee', name:'Taro Coffee', price:10000 },
+      { id:'taro-latte', name:'Taro Latte', price:8000 }
     ];
+    let menu=[...DEFAULT_MENU], cart=[];
+    const menuGrid=document.getElementById('menuGrid');
+    const cartList=document.getElementById('cartList');
+    const totalRp=document.getElementById('totalRp');
+    const totalItems=document.getElementById('totalItems');
+    const cartCount=document.getElementById('cartCount');
+    const paidAmount=document.getElementById('paidAmount');
+    const changeRp=document.getElementById('changeRp');
 
-    // --- state
-    let menu = [...DEFAULT_MENU];
-    let cart = [];
-
-    // DOM
-    const menuGrid = document.getElementById('menuGrid');
-    const cartList = document.getElementById('cartList');
-    const totalRp = document.getElementById('totalRp');
-    const totalItems = document.getElementById('totalItems');
-    const cartCount = document.getElementById('cartCount');
-    const paidAmount = document.getElementById('paidAmount');
-    const changeRp = document.getElementById('changeRp');
-    const dbUrlEl = document.getElementById('dbUrl');
-
-    dbUrlEl.textContent = FIREBASE_DB_URL;
-
-    // util format
-    function toRp(n){
-      if(!n) return 'Rp 0';
-      return 'Rp ' + n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    }
-    function findMenu(id){ return menu.find(m => m.id === id); }
-
-    // render menu
+    function toRp(n){return 'Rp '+(n||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g,".");}
     function renderMenu(){
-      menuGrid.innerHTML = '';
+      menuGrid.innerHTML='';
       menu.forEach(m=>{
-        const el = document.createElement('div');
-        el.className = 'menu-item';
-        el.innerHTML = `
+        const el=document.createElement('div');
+        el.className='menu-item';
+        el.innerHTML=`
           <div class="mi-top">
-            <div>
-              <div class="mi-name">${m.name}</div>
-              <div class="small muted">${m.id}</div>
-            </div>
+            <div><div class="mi-name">${m.name}</div></div>
             <div class="mi-price">${toRp(m.price)}</div>
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div class="small muted">Harga: ${m.price}</div>
-            <div class="mi-actions">
-              <button class="ghost" data-id="${m.id}" onclick="addToCart('${m.id}')">Tambah</button>
-            </div>
-          </div>
-        `;
+          <button class="btn" onclick="addToCart('${m.id}')">Tambah</button>`;
         menuGrid.appendChild(el);
       });
     }
-
-    // cart actions
-    window.addToCart = function(id){
-      const item = findMenu(id);
-      if(!item) return;
-      const existing = cart.find(c => c.id === id && !c.note);
-      // allow multiple lines: if same id, increment qty
-      if(existing){
-        existing.qty += 1;
-      }else{
-        cart.push({ id: item.id, name: item.name, price: item.price, qty: 1, note: '' });
-      }
+    window.addToCart=id=>{
+      const item=menu.find(m=>m.id===id);
+      const exist=cart.find(c=>c.id===id);
+      if(exist) exist.qty++; else cart.push({...item,qty:1});
       refreshCart();
     };
-
     function refreshCart(){
-      cartList.innerHTML = '';
-      let total=0, items=0;
-      cart.forEach((c, idx)=>{
-        const subtotal = c.price * c.qty;
-        total += subtotal;
-        items += c.qty;
-        const div = document.createElement('div');
-        div.className = 'cart-item';
-        div.innerHTML = `
+      cartList.innerHTML='';let total=0,items=0;
+      cart.forEach((c,i)=>{
+        total+=c.price*c.qty;items+=c.qty;
+        const div=document.createElement('div');
+        div.className='cart-item';
+        div.innerHTML=`
           <div style="flex:1">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div style="font-weight:700">${c.name}</div>
-              <div style="font-weight:700">${toRp(subtotal)}</div>
+            <div style="display:flex;justify-content:space-between">
+              <div>${c.name}</div><div>${toRp(c.price*c.qty)}</div>
             </div>
-            <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
-              <input class="qty" type="number" min="1" value="${c.qty}" data-idx="${idx}" style="width:72px" />
-              <input type="text" placeholder="Catatan (mis: kurang gula)" value="${c.note||''}" data-note="${idx}" style="flex:1" />
-              <button class="ghost" data-remove="${idx}">Hapus</button>
+            <div style="display:flex;gap:6px;margin-top:6px">
+              <input class="qty" type="number" min="1" value="${c.qty}" data-i="${i}" />
+              <button class="ghost" data-r="${i}">Hapus</button>
             </div>
-          </div>
-        `;
+          </div>`;
         cartList.appendChild(div);
       });
-
-      // attach events (delegated)
       cartList.querySelectorAll('input.qty').forEach(inp=>{
-        inp.addEventListener('change', e=>{
-          const i = Number(e.target.getAttribute('data-idx'));
-          const v = parseInt(e.target.value) || 1;
-          cart[i].qty = v;
-          refreshCart();
-        });
+        inp.onchange=e=>{cart[e.target.dataset.i].qty=parseInt(e.target.value)||1;refreshCart();}
       });
-      cartList.querySelectorAll('input[data-note]').forEach(inp=>{
-        inp.addEventListener('change', e=>{
-          const i = Number(e.target.getAttribute('data-note'));
-          cart[i].note = e.target.value;
-        });
+      cartList.querySelectorAll('button[data-r]').forEach(btn=>{
+        btn.onclick=e=>{cart.splice(e.target.dataset.r,1);refreshCart();}
       });
-      cartList.querySelectorAll('button[data-remove]').forEach(btn=>{
-        btn.addEventListener('click', e=>{
-          const i = Number(e.target.getAttribute('data-remove'));
-          cart.splice(i,1);
-          refreshCart();
-        });
-      });
-
-      totalRp.textContent = toRp(total);
-      totalItems.textContent = items;
-      cartCount.textContent = `${items} item`;
-      // paid
-      const paid = Number(paidAmount.value) || 0;
-      const change = paid - total;
-      changeRp.textContent = toRp(change > 0 ? change : 0);
+      totalRp.textContent=toRp(total);
+      totalItems.textContent=items;
+      cartCount.textContent=`${items} item`;
+      const paid=+paidAmount.value||0;
+      changeRp.textContent=toRp(Math.max(paid-total,0));
     }
-
-    // clear
-    document.getElementById('btnClear').addEventListener('click', ()=>{
-      if(confirm('Bersihkan keranjang?')){ cart = []; refreshCart(); }
-    });
-
-    // reload menu (placeholder for fetching from DB)
-    document.getElementById('btnReload').addEventListener('click', ()=>{
-      loadMenuFromFirebase().catch(()=>{ alert('Gagal muat dari Firebase. Menggunakan menu default.'); menu = [...DEFAULT_MENU]; renderMenu(); });
-    });
-
-    // quick add product
-    document.getElementById('apAddBtn').addEventListener('click', ()=>{
-      const name = document.getElementById('apName').value.trim();
-      const price = Number(document.getElementById('apPrice').value) || 0;
-      if(!name || !price){ alert('Isi nama & harga.'); return; }
-      const id = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,'').slice(0,30) + '-' + Date.now().toString().slice(-4);
-      const p = { id, name, price };
-      menu.unshift(p);
+    document.getElementById('btnClear').onclick=()=>{if(confirm('Bersihkan?')){cart=[];refreshCart();}};
+    document.getElementById('apAddBtn').onclick=()=>{
+      const name=document.getElementById('apName').value.trim();
+      const price=+document.getElementById('apPrice').value||0;
+      if(!name||!price) return alert('Isi nama & harga');
+      menu.unshift({id:name.toLowerCase().replace(/\s+/g,'-')+'-'+Date.now(),name,price});
       renderMenu();
       document.getElementById('apName').value='';document.getElementById('apPrice').value='';
-    });
-
-    // save transaction -> send to Firebase
-    document.getElementById('btnSave').addEventListener('click', async ()=>{
-      if(cart.length===0){ alert('Keranjang kosong.'); return; }
-      const total = cart.reduce((s,c)=>s + c.price*c.qty,0);
-      const paid = Number(paidAmount.value) || 0;
-      const change = paid - total;
-      // build payload
-      const now = new Date();
-      const payload = {
-        createdAt: now.toISOString(),
-        timestamp: Date.now(),
-        items: cart.map(c=>({ id:c.id,name:c.name,price:c.price,qty:c.qty,note:c.note||'' })),
-        total,
-        paid,
-        change: change > 0 ? change : 0,
-        cashier: "Kasir-1"
-      };
-
-      try{
-        const res = await fetch(FIREBASE_DB_URL + '/sales.json', {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if(!res.ok) throw new Error('Gagal simpan');
-        const data = await res.json();
-        alert('Transaksi tersimpan. ID: ' + (data.name || 'ok'));
-        // after save: print struk
-        openPrintWindow(payload, data.name || '');
-        cart = []; paidAmount.value=''; refreshCart();
-      }catch(err){
-        console.error(err);
-        alert('Gagal menyimpan transaksi ke Firebase. Cek konfigurasi DB / rules.');
-      }
-    });
-
-    // print
-    document.getElementById('btnPrint').addEventListener('click', ()=>{
-      if(cart.length===0){ alert('Keranjang kosong'); return; }
-      const payload = {
-        createdAt: new Date().toISOString(),
-        items: cart.map(c=>({ name:c.name, price:c.price, qty:c.qty, subtotal: c.price*c.qty })),
-        total: cart.reduce((s,c)=>s + c.price*c.qty,0),
-        cashier: 'Kasir-1'
-      };
-      openPrintWindow(payload, '');
-    });
-
-    function openPrintWindow(payload, txId=''){
-      const w = window.open('', '_blank', 'width=600,height=600');
-      if(!w) { alert('Popup terblokir. Izinkan popup untuk cetak.'); return; }
-      let rows = '';
-      (payload.items||[]).forEach(it=>{
-        const name = it.name || it.id;
-        const price = it.price || it.price;
-        const qty = it.qty || it.qty;
-        const subtotal = (it.subtotal !== undefined) ? it.subtotal : (price*qty);
-        rows += `<tr><td>${name}</td><td style="text-align:right">${qty} x ${toRp(price)}</td><td style="text-align:right">${toRp(subtotal)}</td></tr>`;
-      });
-      const html = `
-        <html><head><title>Struk</title>
-        <style>
-          body{font-family:Arial;padding:16px;color:#222}
-          table{width:100%;border-collapse:collapse}
-          td{padding:6px}
-          h2{text-align:center;margin-bottom:4px}
-          .muted{color:#666;font-size:13px}
-        </style>
-        </head><body>
-          <h2>Numpang Ngopi.crb</h2>
-          <div class="muted">Struk Transaksi ${txId ? 'ID:'+txId : ''}</div>
-          <div class="muted">${payload.createdAt || new Date().toLocaleString()}</div>
-          <hr />
-          <table>${rows}</table>
-          <hr />
-          <div style="display:flex;justify-content:space-between;font-weight:700">
-            <div>Total</div><div>${toRp(payload.total||0)}</div>
-          </div>
-          <div style="margin-top:16px">Terima kasih telah berkunjung!</div>
-          <script>window.print();</script>
-        </body></html>
-      `;
-      w.document.write(html); w.document.close();
-    }
-
-    // load menu from firebase (/menu.json) if exists
-    async function loadMenuFromFirebase(){
-      const res = await fetch(FIREBASE_DB_URL + '/menu.json');
-      if(!res.ok) throw new Error('no menu');
-      const data = await res.json();
-      if(!data) throw new Error('empty');
-      // expect object or array; normalize to array
-      if(Array.isArray(data)){
-        menu = data.map((it, i)=> ({
-          id: it.id || ('m'+i),
-          name: it.name || 'Menu '+i,
-          price: Number(it.price) || 0
-        }));
-      }else{
-        // if stored as keyed object {id: {name,price}}
-        menu = Object.keys(data).map(k=>({
-          id: k,
-          name: data[k].name || k,
-          price: Number(data[k].price) || 0
-        }));
-      }
-      renderMenu();
-    }
-
-    // init
-    renderMenu();
-    refreshCart();
-
-    // update kembalian saat input paid berubah
-    paidAmount.addEventListener('input', refreshCart);
-
-    // init attempt load menu (best-effort)
-    (async ()=>{
-      try{ await loadMenuFromFirebase(); }catch(e){ /* fallback menu already rendered */ }
-    })();
+    };
+    document.getElementById('btnSave').onclick=async()=>{
+      if(cart.length===0)return alert('Kosong');
+      const payload={createdAt:new Date().toISOString(),items:cart,total:cart.reduce((s,c)=>s+c.price*c.qty,0)};
+      await fetch(FIREBASE_DB_URL+'/sales.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      alert('Tersimpan');cart=[];paidAmount.value='';refreshCart();
+    };
+    document.getElementById('btnPrint').onclick=()=>{
+      if(cart.length===0)return alert('Kosong');
+      const w=window.open('','_blank');let rows='';
+      cart.forEach(c=>{rows+=`<tr><td>${c.name}</td><td>${c.qty}x</td><td style="text-align:right">${toRp(c.price*c.qty)}</td></tr>`;});
+      w.document.write(`<h3>Numpang Ngopi.crb</h3><table>${rows}</table><hr><b>Total: ${totalRp.textContent}</b><script>window.print()</script>`);
+      w.document.close();
+    };
+    paidAmount.oninput=refreshCart;
+    renderMenu();refreshCart();
   </script>
 </body>
 </html>
