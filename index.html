@@ -3,259 +3,411 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Numpang Ngopi — Pesan Online</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <title>Numpang Ngopi.crb — Kasir</title>
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    #invoiceModal .bg-white {
-      animation: scaleIn .3s ease;
+    :root{
+      --brand:#1d899b;
+      --bg:#f7f9fa;
+      --card:#ffffff;
+      --muted:#666;
     }
-    @keyframes scaleIn {
-      from { transform: scale(0.95); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
+    *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Arial;margin:0;padding:0}
+    body{background:var(--bg);color:#222;padding:18px;}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+    .brand{
+      display:flex;align-items:center;gap:10px;
     }
+    .logo{
+      width:46px;height:46px;background:var(--brand);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;
+    }
+    h1{font-size:18px}
+    .layout{display:grid;grid-template-columns:1fr 380px;gap:16px}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}}
+    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+    /* menu grid */
+    .menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+    .menu-item{border:1px solid #eee;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px}
+    .mi-top{display:flex;justify-content:space-between;align-items:start}
+    .mi-name{font-weight:600}
+    .mi-price{font-weight:700;color:var(--brand)}
+    .mi-actions{display:flex;gap:8px}
+    button.btn{background:var(--brand);color:#fff;border:none;padding:8px 10px;border-radius:8px;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid #ddd;padding:6px 8px;border-radius:8px;cursor:pointer}
+    /* cart */
+    .cart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .cart-list{max-height:420px;overflow:auto;display:flex;flex-direction:column;gap:8px;padding-right:6px}
+    .cart-item{display:flex;gap:8px;align-items:center;border-radius:8px;padding:8px;border:1px solid #f0f0f0}
+    .qty{width:46px;text-align:center;border-radius:6px;border:1px solid #eee;padding:6px}
+    .small{font-size:13px;color:var(--muted)}
+    .total-box{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px dashed #eee}
+    .actions-row{display:flex;gap:8px;margin-top:12px}
+    input[type="number"]{width:100%;}
+    .muted{color:var(--muted);font-size:13px}
+    /* add product */
+    .add-product{display:flex;gap:8px;margin-top:10px}
+    input,select,textarea{padding:8px;border-radius:8px;border:1px solid #e6e6e6}
+    .small-btn{padding:6px 8px;border-radius:8px;border:none;cursor:pointer}
   </style>
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
-
-  <!-- Header -->
-  <header class="bg-gradient-to-r from-yellow-500 to-amber-600 text-white p-4 shadow">
-    <div class="max-w-4xl mx-auto flex items-center justify-between">
-      <h1 class="text-lg font-bold tracking-wide">☕ Numpang Ngopi • Mangkal's • Cirebon</h1>
-      <div class="text-sm">Pesan via WhatsApp otomatis</div>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">NG</div>
+      <div>
+        <h1>Numpang Ngopi.crb — Kasir</h1>
+        <div class="muted">Sistem kasir sederhana untuk kedai</div>
+      </div>
     </div>
   </header>
 
-  <!-- Main -->
-  <main class="flex-1 max-w-4xl mx-auto p-6 w-full">
-    <section class="grid md:grid-cols-2 gap-6">
-
-      <!-- Menu -->
-      <div class="space-y-6">
-        <div class="bg-white rounded-xl shadow p-4">
-          <h2 class="font-semibold text-lg mb-3">Coffee</h2>
-          <div id="coffeeList" class="space-y-3"></div>
+  <main class="layout">
+    <!-- Menu -->
+    <section class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div>
+          <strong>Menu</strong>
+          <div class="small muted">Pilih produk untuk ditambah ke keranjang</div>
         </div>
-
-        <div class="bg-white rounded-xl shadow p-4">
-          <h2 class="font-semibold text-lg mb-3">Non Coffee</h2>
-          <div id="noncoffeeList" class="space-y-3"></div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow p-4">
-          <h2 class="font-semibold text-lg mb-3">Add-ons</h2>
-          <div id="addonsList" class="space-y-3"></div>
+        <div>
+          <button class="ghost" id="btnReload">Muat Ulang</button>
+          <button class="btn" id="btnOpenAdd">Tambah Produk</button>
         </div>
       </div>
 
-      <!-- Cart -->
-      <div class="bg-white rounded-xl shadow p-4 sticky top-6">
-        <h2 class="font-semibold text-lg mb-3">Keranjang</h2>
+      <div id="menuGrid" class="menu-grid"></div>
 
-        <div id="cartItems" class="space-y-3 mb-4">
-          <p class="text-sm text-gray-500">Belum ada item.</p>
+      <!-- add product (quick) -->
+      <div class="card" style="margin-top:12px">
+        <div style="font-weight:600;margin-bottom:8px">Tambah Cepat Produk</div>
+        <div class="add-product">
+          <input id="apName" placeholder="Nama produk (contoh: Kopi Susu Aren)" />
+          <input id="apPrice" type="number" placeholder="Harga (contoh: 8000)" />
+          <button class="small-btn" id="apAddBtn" style="background:var(--brand);color:#fff">Tambah</button>
         </div>
-
-        <div class="border-t pt-3">
-          <div class="flex justify-between text-gray-600">
-            <div>Subtotal</div>
-            <div id="subtotalText">Rp 0</div>
-          </div>
-          <div class="flex justify-between text-gray-600 mt-2">
-            <div>Biaya layanan</div>
-            <div id="feeText">Rp 0</div>
-          </div>
-          <div class="flex justify-between font-bold text-lg mt-3">
-            <div>Total</div>
-            <div id="totalText">Rp 0</div>
-          </div>
-        </div>
-
-        <div class="mt-4 space-y-2">
-          <input id="customerName" placeholder="Nama pemesan" class="w-full p-2 border rounded" />
-          <input id="customerNote" placeholder="Catatan / alamat (opsional)" class="w-full p-2 border rounded" />
-        </div>
-
-        <div class="mt-4 flex gap-2">
-          <button id="saveBtn" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Simpan & Kirim WA</button>
-          <button id="clearBtn" class="px-3 py-2 bg-gray-200 rounded">Bersihkan</button>
-        </div>
-
-        <p class="text-xs text-gray-500 mt-3">Pesanan akan tersimpan ke Firebase lalu tampil invoice sebelum ke WhatsApp.</p>
+        <div class="muted" style="margin-top:8px">Produk cepat hanya tersimpan di session (refresh hilang). Gunakan fitur admin untuk simpan permanen.</div>
       </div>
-
     </section>
+
+    <!-- Kasir / Keranjang -->
+    <aside class="card">
+      <div class="cart-header">
+        <div><strong>Keranjang</strong><div class="small muted" id="cartCount">0 item</div></div>
+        <div><small class="muted" id="shiftInfo">Shift: -</small></div>
+      </div>
+
+      <div class="cart-list" id="cartList">
+        <!-- items will show here -->
+      </div>
+
+      <div class="total-box">
+        <div>Total</div>
+        <div style="font-weight:800" id="totalRp">Rp 0</div>
+      </div>
+
+      <div style="margin-top:10px">
+        <label class="small muted">Pembayar:</label>
+        <input type="number" id="paidAmount" placeholder="Masukkan jumlah bayar" />
+      </div>
+
+      <div style="display:flex;justify-content:space-between;gap:8px;margin-top:8px">
+        <div style="flex:1">
+          <div class="small muted">Kembalian</div>
+          <div id="changeRp" style="font-weight:700">Rp 0</div>
+        </div>
+        <div style="flex:1">
+          <div class="small muted">Jumlah Item</div>
+          <div id="totalItems" style="font-weight:700">0</div>
+        </div>
+      </div>
+
+      <div class="actions-row">
+        <button class="btn" id="btnSave">Simpan Transaksi</button>
+        <button class="ghost" id="btnClear">Bersihkan</button>
+        <button class="ghost" id="btnPrint">Cetak Struk</button>
+      </div>
+
+      <div style="margin-top:12px" class="muted">
+        Endpoint Firebase: <code id="dbUrl"></code>
+      </div>
+    </aside>
   </main>
 
-  <!-- Footer -->
-  <footer class="bg-gray-100 text-center text-sm text-gray-600 py-3">
-    © Numpang Ngopi • Mangkal's
-  </footer>
+  <script>
+    /********* CONFIG *********/
+    // Ganti jika perlu — gunakan URL Realtime DB project Anda (akhiri tanpa slash)
+    const FIREBASE_DB_URL = "https://numpang-ngopi-crb-default-rtdb.asia-southeast1.firebasedatabase.app";
 
-  <!-- Modal Invoice -->
-  <div id="invoiceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
-      <h3 class="text-lg font-semibold mb-4">Invoice Pesanan</h3>
-      <div id="invoiceContent" class="mb-4 text-sm"></div>
-      <div class="flex justify-end gap-2">
-        <button id="cancelInvoice" class="px-4 py-2 bg-gray-200 rounded">Batal</button>
-        <button id="confirmInvoice" class="px-4 py-2 bg-green-600 text-white rounded">Konfirmasi & Kirim WA</button>
-      </div>
-    </div>
-  </div>
+    // Default menu (jika tidak ambil dari database)
+    const DEFAULT_MENU = [
+      { id: 'kopi-susu-aren', name: 'Kopi Susu Gula Aren', price: 8000 },
+      { id: 'kopi-susu-latte', name: 'Kopi Susu Latte', price: 8000 },
+      { id: 'americano', name: 'Americano', price: 6000 },
+      { id: 'capuchino', name: 'Capuchino', price: 10000 },
+      { id: 'taro-coffee', name: 'Taro Coffee', price: 10000 },
+      { id: 'taro-latte', name: 'Taro Latte (Non Coffee)', price: 8000 }
+    ];
 
-<script>
-const FIREBASE_URL = "https://numpang-ngopi-crb-2c1b7-default-rtdb.firebaseio.com";
-const WA_NUMBER = "628984290300"; // 08984290300 -> wa.me format
-const SERVICE_FEE = 0;
+    // --- state
+    let menu = [...DEFAULT_MENU];
+    let cart = [];
 
-const MENU = {
-  coffee: [
-    { id: "kopi_susu_gula_aren", name: "kopi susu gula aren", price: 8000 },
-    { id: "kopi_susu_latte", name: "kopi susu latte", price: 8000 },
-    { id: "americano", name: "Americano", price: 6000 },
-    { id: "capuchino", name: "capuchino", price: 10000 },
-    { id: "taro_coffe", name: "taro coffe", price: 10000 }
-  ],
-  noncoffee: [
-    { id: "taro_latte", name: "taro latte", price: 8000 },
-    { id: "coklat_latte", name: "coklat latte", price: 8000 },
-    { id: "redvelvet_latte", name: "redvelvet latte", price: 8000 }
-  ],
-  addons: [
-    { id: "creamy", name: "Creamy", price: 1000 },
-    { id: "aren", name: "Aren", price: 1000 },
-    { id: "es_batu", name: "Es Batu", price: 100 }
-  ]
-};
+    // DOM
+    const menuGrid = document.getElementById('menuGrid');
+    const cartList = document.getElementById('cartList');
+    const totalRp = document.getElementById('totalRp');
+    const totalItems = document.getElementById('totalItems');
+    const cartCount = document.getElementById('cartCount');
+    const paidAmount = document.getElementById('paidAmount');
+    const changeRp = document.getElementById('changeRp');
+    const dbUrlEl = document.getElementById('dbUrl');
 
-let cart = {};
-function formatIDR(n){return "Rp "+n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,".");}
+    dbUrlEl.textContent = FIREBASE_DB_URL;
 
-function createMenuList(){
-  MENU.coffee.forEach(it=>document.getElementById("coffeeList").appendChild(createRow(it)));
-  MENU.noncoffee.forEach(it=>document.getElementById("noncoffeeList").appendChild(createRow(it)));
-  MENU.addons.forEach(it=>document.getElementById("addonsList").appendChild(createRow(it,true)));
-}
+    // util format
+    function toRp(n){
+      if(!n) return 'Rp 0';
+      return 'Rp ' + n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+    function findMenu(id){ return menu.find(m => m.id === id); }
 
-function createRow(item,isAddon=false){
-  const wrap=document.createElement("div");
-  wrap.className="flex items-center justify-between bg-gray-50 hover:bg-gray-100 rounded-lg p-2 transition";
-  wrap.innerHTML=`
-    <div>
-      <div class="font-medium">${item.name}</div>
-      <div class="text-sm text-amber-600">${formatIDR(item.price)}</div>
-    </div>
-    <input type="number" min="0" value="0" class="w-16 p-2 border rounded text-center focus:ring-2 focus:ring-amber-500" />
-  `;
-  const input=wrap.querySelector("input");
-  input.oninput=()=>{
-    const q=parseInt(input.value)||0;
-    if(q<=0){delete cart[item.id];}
-    else{cart[item.id]={...item,qty:q,addon:isAddon};}
-    renderCart();
-  };
-  return wrap;
-}
+    // render menu
+    function renderMenu(){
+      menuGrid.innerHTML = '';
+      menu.forEach(m=>{
+        const el = document.createElement('div');
+        el.className = 'menu-item';
+        el.innerHTML = `
+          <div class="mi-top">
+            <div>
+              <div class="mi-name">${m.name}</div>
+              <div class="small muted">${m.id}</div>
+            </div>
+            <div class="mi-price">${toRp(m.price)}</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="small muted">Harga: ${m.price}</div>
+            <div class="mi-actions">
+              <button class="ghost" data-id="${m.id}" onclick="addToCart('${m.id}')">Tambah</button>
+            </div>
+          </div>
+        `;
+        menuGrid.appendChild(el);
+      });
+    }
 
-function renderCart(){
-  const div=document.getElementById("cartItems");
-  div.innerHTML="";
-  const items=Object.values(cart);
-  if(!items.length){div.innerHTML="<p class='text-sm text-gray-500'>Belum ada item.</p>";}
-  else{
-    items.forEach(it=>{
-      const row=document.createElement("div");
-      row.className="flex items-center justify-between p-2 border rounded";
-      row.innerHTML=`
-        <div>
-          <div class="font-medium">${it.name}${it.addon?" (Add-on)":""}</div>
-          <div class="text-sm text-gray-500">x${it.qty} • ${formatIDR(it.price)}</div>
-        </div>
-      `;
-      div.appendChild(row);
+    // cart actions
+    window.addToCart = function(id){
+      const item = findMenu(id);
+      if(!item) return;
+      const existing = cart.find(c => c.id === id && !c.note);
+      // allow multiple lines: if same id, increment qty
+      if(existing){
+        existing.qty += 1;
+      }else{
+        cart.push({ id: item.id, name: item.name, price: item.price, qty: 1, note: '' });
+      }
+      refreshCart();
+    };
+
+    function refreshCart(){
+      cartList.innerHTML = '';
+      let total=0, items=0;
+      cart.forEach((c, idx)=>{
+        const subtotal = c.price * c.qty;
+        total += subtotal;
+        items += c.qty;
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML = `
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="font-weight:700">${c.name}</div>
+              <div style="font-weight:700">${toRp(subtotal)}</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+              <input class="qty" type="number" min="1" value="${c.qty}" data-idx="${idx}" style="width:72px" />
+              <input type="text" placeholder="Catatan (mis: kurang gula)" value="${c.note||''}" data-note="${idx}" style="flex:1" />
+              <button class="ghost" data-remove="${idx}">Hapus</button>
+            </div>
+          </div>
+        `;
+        cartList.appendChild(div);
+      });
+
+      // attach events (delegated)
+      cartList.querySelectorAll('input.qty').forEach(inp=>{
+        inp.addEventListener('change', e=>{
+          const i = Number(e.target.getAttribute('data-idx'));
+          const v = parseInt(e.target.value) || 1;
+          cart[i].qty = v;
+          refreshCart();
+        });
+      });
+      cartList.querySelectorAll('input[data-note]').forEach(inp=>{
+        inp.addEventListener('change', e=>{
+          const i = Number(e.target.getAttribute('data-note'));
+          cart[i].note = e.target.value;
+        });
+      });
+      cartList.querySelectorAll('button[data-remove]').forEach(btn=>{
+        btn.addEventListener('click', e=>{
+          const i = Number(e.target.getAttribute('data-remove'));
+          cart.splice(i,1);
+          refreshCart();
+        });
+      });
+
+      totalRp.textContent = toRp(total);
+      totalItems.textContent = items;
+      cartCount.textContent = `${items} item`;
+      // paid
+      const paid = Number(paidAmount.value) || 0;
+      const change = paid - total;
+      changeRp.textContent = toRp(change > 0 ? change : 0);
+    }
+
+    // clear
+    document.getElementById('btnClear').addEventListener('click', ()=>{
+      if(confirm('Bersihkan keranjang?')){ cart = []; refreshCart(); }
     });
-  }
-  const t=computeTotals();
-  document.getElementById("subtotalText").textContent=formatIDR(t.subtotal);
-  document.getElementById("feeText").textContent=formatIDR(t.fee);
-  document.getElementById("totalText").textContent=formatIDR(t.total);
-}
 
-function computeTotals(){
-  let subtotal=0;
-  Object.values(cart).forEach(it=>subtotal+=it.price*it.qty);
-  return {subtotal,fee:SERVICE_FEE,total:subtotal+SERVICE_FEE};
-}
+    // reload menu (placeholder for fetching from DB)
+    document.getElementById('btnReload').addEventListener('click', ()=>{
+      loadMenuFromFirebase().catch(()=>{ alert('Gagal muat dari Firebase. Menggunakan menu default.'); menu = [...DEFAULT_MENU]; renderMenu(); });
+    });
 
-// ===== Modal Invoice =====
-const modal=document.getElementById("invoiceModal");
-const content=document.getElementById("invoiceContent");
-const confirmBtn=document.getElementById("confirmInvoice");
-const cancelBtn=document.getElementById("cancelInvoice");
+    // quick add product
+    document.getElementById('apAddBtn').addEventListener('click', ()=>{
+      const name = document.getElementById('apName').value.trim();
+      const price = Number(document.getElementById('apPrice').value) || 0;
+      if(!name || !price){ alert('Isi nama & harga.'); return; }
+      const id = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,'').slice(0,30) + '-' + Date.now().toString().slice(-4);
+      const p = { id, name, price };
+      menu.unshift(p);
+      renderMenu();
+      document.getElementById('apName').value='';document.getElementById('apPrice').value='';
+    });
 
-function showInvoice(order,id){
-  let html=`<p><b>Nama:</b> ${order.customerName}</p>`;
-  if(order.customerNote)html+=`<p><b>Catatan:</b> ${order.customerNote}</p>`;
-  html+=`<table class="w-full mt-3 border text-sm"><thead><tr class="bg-gray-100">
-    <th class="border px-2 py-1 text-left">Item</th>
-    <th class="border px-2 py-1">Qty</th>
-    <th class="border px-2 py-1">Harga</th></tr></thead><tbody>`;
-  order.items.forEach(it=>{
-    html+=`<tr>
-      <td class="border px-2 py-1">${it.name}${it.addon?" (Add-on)":""}</td>
-      <td class="border px-2 py-1 text-center">${it.qty}</td>
-      <td class="border px-2 py-1 text-right">${formatIDR(it.price*it.qty)}</td>
-    </tr>`;
-  });
-  html+=`</tbody><tfoot>
-    <tr><td colspan="2" class="border px-2 py-1 text-right font-bold">Subtotal</td><td class="border px-2 py-1 text-right">${formatIDR(order.subtotal)}</td></tr>
-    <tr><td colspan="2" class="border px-2 py-1 text-right font-bold">Total</td><td class="border px-2 py-1 text-right">${formatIDR(order.total)}</td></tr>
-  </tfoot></table>`;
-  if(id)html+=`<p class="mt-2 text-xs text-gray-500">ID Pesanan: ${id}</p>`;
-  content.innerHTML=html;
-  modal.classList.remove("hidden");modal.classList.add("flex");
-  confirmBtn.onclick=()=>sendWA(order,id);
-  cancelBtn.onclick=()=>{modal.classList.add("hidden");modal.classList.remove("flex");};
-}
+    // save transaction -> send to Firebase
+    document.getElementById('btnSave').addEventListener('click', async ()=>{
+      if(cart.length===0){ alert('Keranjang kosong.'); return; }
+      const total = cart.reduce((s,c)=>s + c.price*c.qty,0);
+      const paid = Number(paidAmount.value) || 0;
+      const change = paid - total;
+      // build payload
+      const now = new Date();
+      const payload = {
+        createdAt: now.toISOString(),
+        timestamp: Date.now(),
+        items: cart.map(c=>({ id:c.id,name:c.name,price:c.price,qty:c.qty,note:c.note||'' })),
+        total,
+        paid,
+        change: change > 0 ? change : 0,
+        cashier: "Kasir-1"
+      };
 
-// ===== Save + Invoice =====
-async function saveAndSend(){
-  const name=document.getElementById("customerName").value.trim();
-  if(!name)return alert("Isi nama pemesan.");
-  const note=document.getElementById("customerNote").value.trim();
-  const items=Object.values(cart);
-  if(!items.length)return alert("Keranjang kosong.");
-  const totals=computeTotals();
-  const order={customerName:name,customerNote:note,items,subtotal:totals.subtotal,fee:totals.fee,total:totals.total,createdAt:Date.now(),status:"new"};
-  try{
-    const res=await fetch(`${FIREBASE_URL}/orders.json`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(order)});
-    const data=await res.json();
-    showInvoice(order,data?.name);
-  }catch(e){console.error(e);alert("Gagal simpan pesanan.");}
-}
+      try{
+        const res = await fetch(FIREBASE_DB_URL + '/sales.json', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if(!res.ok) throw new Error('Gagal simpan');
+        const data = await res.json();
+        alert('Transaksi tersimpan. ID: ' + (data.name || 'ok'));
+        // after save: print struk
+        openPrintWindow(payload, data.name || '');
+        cart = []; paidAmount.value=''; refreshCart();
+      }catch(err){
+        console.error(err);
+        alert('Gagal menyimpan transaksi ke Firebase. Cek konfigurasi DB / rules.');
+      }
+    });
 
-function sendWA(order,id){
-  let msg=`Halo saya ingin pesan:%0ANama: ${encodeURIComponent(order.customerName)}%0A`;
-  if(order.customerNote)msg+=`Catatan: ${encodeURIComponent(order.customerNote)}%0A`;
-  msg+=`%0APesanan:%0A`;
-  order.items.forEach(it=>{msg+=`${encodeURIComponent(it.name)} x${it.qty} = ${encodeURIComponent(formatIDR(it.price*it.qty))}%0A`;});
-  msg+=`%0ASubtotal: ${encodeURIComponent(formatIDR(order.subtotal))}%0ATotal: ${encodeURIComponent(formatIDR(order.total))}%0A`;
-  if(id)msg+=`ID Pesanan: ${encodeURIComponent(id)}%0A`;
-  msg+=`%0A(Terima kasih)`;
-  window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`,"_blank");
-  cart={};renderCart();
-  document.querySelectorAll("input[type='number']").forEach(i=>i.value=0);
-  document.getElementById("customerNote").value="";document.getElementById("customerName").value="";
-  modal.classList.add("hidden");modal.classList.remove("flex");
-}
+    // print
+    document.getElementById('btnPrint').addEventListener('click', ()=>{
+      if(cart.length===0){ alert('Keranjang kosong'); return; }
+      const payload = {
+        createdAt: new Date().toISOString(),
+        items: cart.map(c=>({ name:c.name, price:c.price, qty:c.qty, subtotal: c.price*c.qty })),
+        total: cart.reduce((s,c)=>s + c.price*c.qty,0),
+        cashier: 'Kasir-1'
+      };
+      openPrintWindow(payload, '');
+    });
 
-document.getElementById("saveBtn").onclick=saveAndSend;
-document.getElementById("clearBtn").onclick=()=>{if(confirm("Hapus semua item?")){cart={};renderCart();document.querySelectorAll("input[type='number']").forEach(i=>i.value=0);}};
+    function openPrintWindow(payload, txId=''){
+      const w = window.open('', '_blank', 'width=600,height=600');
+      if(!w) { alert('Popup terblokir. Izinkan popup untuk cetak.'); return; }
+      let rows = '';
+      (payload.items||[]).forEach(it=>{
+        const name = it.name || it.id;
+        const price = it.price || it.price;
+        const qty = it.qty || it.qty;
+        const subtotal = (it.subtotal !== undefined) ? it.subtotal : (price*qty);
+        rows += `<tr><td>${name}</td><td style="text-align:right">${qty} x ${toRp(price)}</td><td style="text-align:right">${toRp(subtotal)}</td></tr>`;
+      });
+      const html = `
+        <html><head><title>Struk</title>
+        <style>
+          body{font-family:Arial;padding:16px;color:#222}
+          table{width:100%;border-collapse:collapse}
+          td{padding:6px}
+          h2{text-align:center;margin-bottom:4px}
+          .muted{color:#666;font-size:13px}
+        </style>
+        </head><body>
+          <h2>Numpang Ngopi.crb</h2>
+          <div class="muted">Struk Transaksi ${txId ? 'ID:'+txId : ''}</div>
+          <div class="muted">${payload.createdAt || new Date().toLocaleString()}</div>
+          <hr />
+          <table>${rows}</table>
+          <hr />
+          <div style="display:flex;justify-content:space-between;font-weight:700">
+            <div>Total</div><div>${toRp(payload.total||0)}</div>
+          </div>
+          <div style="margin-top:16px">Terima kasih telah berkunjung!</div>
+          <script>window.print();</script>
+        </body></html>
+      `;
+      w.document.write(html); w.document.close();
+    }
 
-// init
-createMenuList();renderCart();
-</script>
+    // load menu from firebase (/menu.json) if exists
+    async function loadMenuFromFirebase(){
+      const res = await fetch(FIREBASE_DB_URL + '/menu.json');
+      if(!res.ok) throw new Error('no menu');
+      const data = await res.json();
+      if(!data) throw new Error('empty');
+      // expect object or array; normalize to array
+      if(Array.isArray(data)){
+        menu = data.map((it, i)=> ({
+          id: it.id || ('m'+i),
+          name: it.name || 'Menu '+i,
+          price: Number(it.price) || 0
+        }));
+      }else{
+        // if stored as keyed object {id: {name,price}}
+        menu = Object.keys(data).map(k=>({
+          id: k,
+          name: data[k].name || k,
+          price: Number(data[k].price) || 0
+        }));
+      }
+      renderMenu();
+    }
+
+    // init
+    renderMenu();
+    refreshCart();
+
+    // update kembalian saat input paid berubah
+    paidAmount.addEventListener('input', refreshCart);
+
+    // init attempt load menu (best-effort)
+    (async ()=>{
+      try{ await loadMenuFromFirebase(); }catch(e){ /* fallback menu already rendered */ }
+    })();
+  </script>
 </body>
 </html>
