@@ -9,86 +9,34 @@
     :root {
       --primary: #1d899b;
       --primary-dark: #156b78;
+      --danger: #e53935;
+      --danger-dark: #c62828;
+      --warning: #fbc02d;
       --bg: #f8fafc;
       --card: #ffffff;
       --text: #333;
     }
-
     * { box-sizing: border-box; }
-    body { 
-      font-family: "Poppins", sans-serif; 
-      margin: 0; 
-      padding: 0; 
-      background: var(--bg); 
-      color: var(--text);
-    }
-
-    header { 
-      background: var(--primary); 
-      color: #fff; 
-      padding: 20px; 
-      text-align: center; 
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
+    body { font-family: "Poppins", sans-serif; margin: 0; padding: 0; background: var(--bg); color: var(--text);}
+    header { background: var(--primary); color: #fff; padding: 20px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.1);}
     header h1 { margin: 0; font-size: 22px; font-weight: 600; }
     header p { margin: 5px 0 0; font-size: 14px; opacity: 0.9; }
-
-    main { padding: 20px; max-width: 900px; margin: auto; }
-
-    .card { 
-      background: var(--card); 
-      padding: 20px; 
-      border-radius: 12px; 
-      margin-bottom: 20px; 
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-    }
+    main { padding: 20px; max-width: 1000px; margin: auto; display: grid; gap: 20px;}
+    .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);}
     .card h2 { margin-top: 0; font-size: 18px; font-weight: 600; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
-
-    button { 
-      background: var(--primary); 
-      color: #fff; 
-      border: none; 
-      padding: 10px 16px; 
-      border-radius: 8px; 
-      cursor: pointer; 
-      font-size: 14px;
-      font-weight: 500;
-      transition: background 0.2s ease-in-out;
-    }
-    button:hover { background: var(--primary-dark); }
-
-    input { 
-      padding: 10px; 
-      border: 1px solid #ddd; 
-      border-radius: 8px; 
-      width: 100%; 
-      margin: 5px 0; 
-      font-size: 14px;
-    }
-
+    button { cursor: pointer; border: none; border-radius: 8px; padding: 8px 14px; font-size: 14px; font-weight: 500; transition: background 0.2s ease-in-out;}
+    .btn-primary { background: var(--primary); color:#fff;}
+    .btn-primary:hover { background: var(--primary-dark);}
+    .btn-danger { background: var(--danger); color:#fff;}
+    .btn-danger:hover { background: var(--danger-dark);}
+    .btn-warning { background: var(--warning); color:#000;}
+    input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; width: 100%; margin: 5px 0; font-size: 14px;}
     .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
-
-    .cart-item { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      margin-bottom: 8px; 
-      padding: 8px 10px;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    .cart-item button { background: #e53935; padding: 6px 10px; font-size: 12px; }
-    .cart-item button:hover { background: #c62828; }
-
-    .summary { 
-      margin-top: 15px; 
-      font-size: 14px;
-      background: #f9f9f9;
-      padding: 12px;
-      border-radius: 8px;
-    }
+    .menu-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .menu-actions button { margin-left: 6px; }
+    .cart-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; padding: 8px; border-bottom: 1px solid #eee;}
+    .summary { margin-top: 15px; font-size: 14px; background: #f9f9f9; padding: 12px; border-radius: 8px;}
     .summary p { margin: 6px 0; }
-
-    #menu button { margin: 6px 6px 0 0; }
   </style>
 </head>
 <body>
@@ -98,23 +46,19 @@
   </header>
 
   <main>
-    <!-- Menu -->
+    <!-- Manajemen Menu -->
     <div class="card">
-      <h2>Menu</h2>
+      <h2>Daftar Menu</h2>
       <div id="menu"></div>
+      <hr>
+      <h3>Tambah / Edit Produk</h3>
+      <input type="hidden" id="editKey">
+      <input type="text" id="dbName" placeholder="Nama produk">
+      <input type="number" id="dbPrice" placeholder="Harga (contoh: 8000)">
       <div class="btn-row">
-        <button onclick="renderMenu()">🔄 Muat Ulang</button>
-        <button onclick="addProductPrompt()">➕ Tambah Produk</button>
+        <button class="btn-primary" onclick="Menu.saveProduct()">💾 Simpan</button>
+        <button class="btn-warning" onclick="Menu.resetForm()">↩ Batal</button>
       </div>
-    </div>
-
-    <!-- Tambah Cepat Produk -->
-    <div class="card">
-      <h2>Tambah Cepat Produk</h2>
-      <input type="text" id="quickName" placeholder="Nama produk">
-      <input type="number" id="quickPrice" placeholder="Harga (contoh: 8000)">
-      <button onclick="addQuickProduct()">Tambah</button>
-      <p style="font-size:12px;color:#777;margin-top:8px;">Produk cepat hanya tersimpan di session (hilang setelah refresh).</p>
     </div>
 
     <!-- Keranjang -->
@@ -129,141 +73,172 @@
         <p><strong>Jumlah Item:</strong> <span id="itemCount">0</span></p>
       </div>
       <div class="btn-row">
-        <button onclick="saveTransaction()">💾 Simpan</button>
-        <button onclick="clearCart()">🧹 Bersihkan</button>
-        <button onclick="printReceipt()">🖨 Cetak Struk</button>
+        <button class="btn-primary" onclick="Cart.save()">💾 Simpan</button>
+        <button class="btn-warning" onclick="Cart.clear()">🧹 Bersihkan</button>
+        <button class="btn-primary" onclick="Cart.printReceipt()">🖨 Cetak Struk</button>
       </div>
     </div>
   </main>
 
-  <script>
-    let menu = [
-      { name: "Kopi Susu Gula Aren", price: 8000 },
-      { name: "Kopi Susu Latte", price: 8000 },
-      { name: "Americano", price: 6000 },
-      { name: "Cappuccino", price: 10000 },
-      { name: "Taro Coffee", price: 10000 },
-      { name: "Taro Latte", price: 8000 }
-    ];
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, push, set, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-    let cart = [];
-    let total = 0;
-    const menuDiv = document.getElementById("menu");
-    const cartDiv = document.getElementById("cart");
-    const totalSpan = document.getElementById("total");
-    const itemCountSpan = document.getElementById("itemCount");
-    const changeSpan = document.getElementById("change");
-    const paidAmount = document.getElementById("paidAmount");
+    // Konfigurasi Firebase
+    const firebaseConfig = {
+      databaseURL: "https://ka34332-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    function renderMenu() {
-      menuDiv.innerHTML = "";
-      menu.forEach((item, index) => {
-        let btn = document.createElement("button");
-        btn.textContent = `${item.name} (Rp${item.price})`;
-        btn.onclick = () => addToCart(index);
-        menuDiv.appendChild(btn);
-      });
-    }
+    // ================= MENU =================
+    const Menu = {
+      list: [],
+      load() {
+        const menuRef = ref(db, "menu");
+        onValue(menuRef, (snapshot) => {
+          this.list = [];
+          document.getElementById("menu").innerHTML = "";
+          snapshot.forEach((child) => {
+            let key = child.key;
+            let item = child.val();
+            this.list.push({ ...item, key });
+            Menu.renderItem(item, key);
+          });
+        });
+      },
+      renderItem(item, key) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "menu-item";
+        wrapper.innerHTML = `
+          <span>${item.name} (Rp${item.price})</span>
+          <div class="menu-actions">
+            <button class="btn-primary" onclick='Cart.add(${JSON.stringify(item)})'>Tambah</button>
+            <button class="btn-warning" onclick="Menu.edit('${key}', '${item.name}', ${item.price})">Edit</button>
+            <button class="btn-danger" onclick="Menu.delete('${key}')">Hapus</button>
+          </div>
+        `;
+        document.getElementById("menu").appendChild(wrapper);
+      },
+      saveProduct() {
+        const name = document.getElementById("dbName").value.trim();
+        const price = parseInt(document.getElementById("dbPrice").value);
+        const editKey = document.getElementById("editKey").value;
 
-    function addProductPrompt() {
-      let name = prompt("Nama produk:");
-      let price = parseInt(prompt("Harga produk:"));
-      if (name && price > 0) {
-        menu.push({ name, price });
-        renderMenu();
+        if (!name || !price) return alert("Isi nama dan harga dengan benar!");
+
+        if (editKey) {
+          const itemRef = ref(db, "menu/" + editKey);
+          update(itemRef, { name, price });
+          alert("Produk berhasil diperbarui!");
+        } else {
+          const menuRef = ref(db, "menu");
+          const newItemRef = push(menuRef);
+          set(newItemRef, { name, price });
+          alert("Produk berhasil ditambahkan!");
+        }
+        this.resetForm();
+      },
+      edit(key, name, price) {
+        document.getElementById("editKey").value = key;
+        document.getElementById("dbName").value = name;
+        document.getElementById("dbPrice").value = price;
+      },
+      delete(key) {
+        if (confirm("Yakin hapus produk ini?")) {
+          const itemRef = ref(db, "menu/" + key);
+          remove(itemRef);
+        }
+      },
+      resetForm() {
+        document.getElementById("editKey").value = "";
+        document.getElementById("dbName").value = "";
+        document.getElementById("dbPrice").value = "";
       }
-    }
+    };
 
-    function addQuickProduct() {
-      let name = document.getElementById("quickName").value;
-      let price = parseInt(document.getElementById("quickPrice").value);
-      if (name && price > 0) {
-        menu.push({ name, price });
-        renderMenu();
-        document.getElementById("quickName").value = "";
-        document.getElementById("quickPrice").value = "";
+    // ================= CART =================
+    const Cart = {
+      list: [],
+      add(item) {
+        let found = this.list.find(c => c.name === item.name);
+        if (found) found.qty++;
+        else this.list.push({ ...item, qty: 1 });
+        this.refresh();
+      },
+      remove(i) {
+        this.list.splice(i, 1);
+        this.refresh();
+      },
+      clear() {
+        this.list = [];
+        this.refresh();
+      },
+      refresh() {
+        const cartDiv = document.getElementById("cart");
+        cartDiv.innerHTML = "";
+        let total = 0, itemCount = 0;
+
+        this.list.forEach((item, i) => {
+          let line = document.createElement("div");
+          line.className = "cart-item";
+          line.innerHTML = `
+            <span>${item.name} x${item.qty} — Rp${item.price * item.qty}</span>
+            <button class="btn-danger" onclick="Cart.remove(${i})">Hapus</button>`;
+          cartDiv.appendChild(line);
+          total += item.price * item.qty;
+          itemCount += item.qty;
+        });
+
+        document.getElementById("total").textContent = total;
+        document.getElementById("itemCount").textContent = itemCount;
+        const paidAmount = parseInt(document.getElementById("paidAmount").value) || 0;
+        document.getElementById("change").textContent = paidAmount - total >= 0 ? paidAmount - total : 0;
+      },
+      save() {
+        alert("Transaksi disimpan (simulasi). Total: Rp " + document.getElementById("total").textContent);
+        this.clear();
+        document.getElementById("paidAmount").value = "";
+      },
+      printReceipt() {
+        let w = window.open('', '', 'width=400,height=600');
+        let total = document.getElementById("total").textContent;
+        let paid = document.getElementById("paidAmount").value || 0;
+        let change = paid - total;
+        let receipt = `
+          <html>
+            <head>
+              <title>Struk Numpang Ngopi.crb</title>
+              <style>
+                body { font-family: monospace; padding: 10px; font-size: 13px; }
+                h2 { text-align: center; margin-bottom: 10px; }
+                hr { border: none; border-top: 1px dashed #000; margin: 10px 0; }
+              </style>
+            </head>
+            <body>
+              <h2>Numpang Ngopi.crb</h2>
+              <div>${this.list.map(item => `${item.name} - Rp${item.price} x ${item.qty} = Rp${item.price*item.qty}`).join("<br>")}</div>
+              <hr>
+              <p>Total: Rp ${total}</p>
+              <p>Bayar: Rp ${paid}</p>
+              <p>Kembali: Rp ${change}</p>
+              <hr>
+              <p style="text-align:center;">Terima Kasih 🙏</p>
+            </body>
+          </html>
+        `;
+        w.document.write(receipt);
+        w.document.close();
+        w.print();
       }
-    }
+    };
 
-    function addToCart(index) {
-      let item = menu[index];
-      let found = cart.find(c => c.name === item.name);
-      if (found) {
-        found.qty++;
-      } else {
-        cart.push({ ...item, qty: 1 });
-      }
-      refreshCart();
-    }
+    // Event listener perubahan jumlah bayar
+    document.getElementById("paidAmount").oninput = () => Cart.refresh();
 
-    function refreshCart() {
-      cartDiv.innerHTML = "";
-      total = 0;
-      let itemCount = 0;
-      cart.forEach((item, i) => {
-        let line = document.createElement("div");
-        line.className = "cart-item";
-        line.innerHTML = `
-          <span>${item.name} x${item.qty} — Rp${item.price * item.qty}</span>
-          <button onclick="removeItem(${i})">Hapus</button>`;
-        cartDiv.appendChild(line);
-        total += item.price * item.qty;
-        itemCount += item.qty;
-      });
-      totalSpan.textContent = total;
-      itemCountSpan.textContent = itemCount;
-      let change = (parseInt(paidAmount.value) || 0) - total;
-      changeSpan.textContent = change >= 0 ? change : 0;
-    }
-
-    function removeItem(i) {
-      cart.splice(i, 1);
-      refreshCart();
-    }
-
-    function clearCart() {
-      cart = [];
-      refreshCart();
-    }
-
-    function saveTransaction() {
-      alert("Transaksi disimpan (simulasi). Total: Rp " + total);
-      clearCart();
-      paidAmount.value = "";
-    }
-
-    function printReceipt() {
-      let w = window.open('', '', 'width=400,height=600');
-      let receipt = `
-        <html>
-          <head>
-            <title>Struk Numpang Ngopi.crb</title>
-            <style>
-              body { font-family: monospace; padding: 10px; font-size: 13px; }
-              h2 { text-align: center; margin-bottom: 10px; }
-              hr { border: none; border-top: 1px dashed #000; margin: 10px 0; }
-            </style>
-          </head>
-          <body>
-            <h2>Numpang Ngopi.crb</h2>
-            <div>${cart.map(item => `${item.name} - Rp${item.price} x ${item.qty} = Rp${item.price*item.qty}`).join("<br>")}</div>
-            <hr>
-            <p>Total: Rp ${total}</p>
-            <p>Bayar: Rp ${paidAmount.value || 0}</p>
-            <p>Kembali: Rp ${(paidAmount.value || 0) - total}</p>
-            <hr>
-            <p style="text-align:center;">Terima Kasih 🙏</p>
-          </body>
-        </html>
-      `;
-      w.document.write(receipt);
-      w.document.close();
-      w.print();
-    }
-
-    paidAmount.oninput = refreshCart;
-    renderMenu();
-    refreshCart();
+    // Load menu awal
+    Menu.load();
   </script>
 </body>
 </html>
