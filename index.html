@@ -4,24 +4,91 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Numpang Ngopi.crb — Kasir</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
-    header { background: #1d899b; color: #fff; padding: 15px; text-align: center; }
-    header h1 { margin: 0; font-size: 20px; }
-    header p { margin: 5px 0 0; font-size: 14px; }
+    :root {
+      --primary: #1d899b;
+      --primary-dark: #156b78;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #333;
+    }
 
-    main { padding: 15px; }
-    .card { background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .card h2 { margin-top: 0; font-size: 18px; }
+    * { box-sizing: border-box; }
+    body { 
+      font-family: "Poppins", sans-serif; 
+      margin: 0; 
+      padding: 0; 
+      background: var(--bg); 
+      color: var(--text);
+    }
 
-    button { background: #1d899b; color: #fff; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; margin: 5px 0; }
-    button:hover { opacity: 0.9; }
+    header { 
+      background: var(--primary); 
+      color: #fff; 
+      padding: 20px; 
+      text-align: center; 
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    header h1 { margin: 0; font-size: 22px; font-weight: 600; }
+    header p { margin: 5px 0 0; font-size: 14px; opacity: 0.9; }
 
-    input { padding: 8px; border: 1px solid #ccc; border-radius: 6px; width: 100%; margin: 5px 0; }
-    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    main { padding: 20px; max-width: 900px; margin: auto; }
 
-    .cart-item { display: flex; justify-content: space-between; margin-bottom: 5px; }
-    .summary p { margin: 5px 0; }
+    .card { 
+      background: var(--card); 
+      padding: 20px; 
+      border-radius: 12px; 
+      margin-bottom: 20px; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+    }
+    .card h2 { margin-top: 0; font-size: 18px; font-weight: 600; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+
+    button { 
+      background: var(--primary); 
+      color: #fff; 
+      border: none; 
+      padding: 10px 16px; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.2s ease-in-out;
+    }
+    button:hover { background: var(--primary-dark); }
+
+    input { 
+      padding: 10px; 
+      border: 1px solid #ddd; 
+      border-radius: 8px; 
+      width: 100%; 
+      margin: 5px 0; 
+      font-size: 14px;
+    }
+
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+
+    .cart-item { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 8px; 
+      padding: 8px 10px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .cart-item button { background: #e53935; padding: 6px 10px; font-size: 12px; }
+    .cart-item button:hover { background: #c62828; }
+
+    .summary { 
+      margin-top: 15px; 
+      font-size: 14px;
+      background: #f9f9f9;
+      padding: 12px;
+      border-radius: 8px;
+    }
+    .summary p { margin: 6px 0; }
+
+    #menu button { margin: 6px 6px 0 0; }
   </style>
 </head>
 <body>
@@ -35,8 +102,10 @@
     <div class="card">
       <h2>Menu</h2>
       <div id="menu"></div>
-      <button onclick="renderMenu()">Muat Ulang</button>
-      <button onclick="addProductPrompt()">Tambah Produk</button>
+      <div class="btn-row">
+        <button onclick="renderMenu()">🔄 Muat Ulang</button>
+        <button onclick="addProductPrompt()">➕ Tambah Produk</button>
+      </div>
     </div>
 
     <!-- Tambah Cepat Produk -->
@@ -45,7 +114,7 @@
       <input type="text" id="quickName" placeholder="Nama produk">
       <input type="number" id="quickPrice" placeholder="Harga (contoh: 8000)">
       <button onclick="addQuickProduct()">Tambah</button>
-      <p style="font-size:12px;color:#555;">Produk cepat hanya tersimpan di session (refresh hilang).</p>
+      <p style="font-size:12px;color:#777;margin-top:8px;">Produk cepat hanya tersimpan di session (hilang setelah refresh).</p>
     </div>
 
     <!-- Keranjang -->
@@ -60,15 +129,14 @@
         <p><strong>Jumlah Item:</strong> <span id="itemCount">0</span></p>
       </div>
       <div class="btn-row">
-        <button onclick="saveTransaction()">Simpan</button>
-        <button onclick="clearCart()">Bersihkan</button>
-        <button onclick="printReceipt()">Cetak Struk</button>
+        <button onclick="saveTransaction()">💾 Simpan</button>
+        <button onclick="clearCart()">🧹 Bersihkan</button>
+        <button onclick="printReceipt()">🖨 Cetak Struk</button>
       </div>
     </div>
   </main>
 
   <script>
-    // Data menu awal
     let menu = [
       { name: "Kopi Susu Gula Aren", price: 8000 },
       { name: "Kopi Susu Latte", price: 8000 },
@@ -135,7 +203,8 @@
       cart.forEach((item, i) => {
         let line = document.createElement("div");
         line.className = "cart-item";
-        line.innerHTML = `${item.name} x${item.qty} - Rp${item.price * item.qty} 
+        line.innerHTML = `
+          <span>${item.name} x${item.qty} — Rp${item.price * item.qty}</span>
           <button onclick="removeItem(${i})">Hapus</button>`;
         cartDiv.appendChild(line);
         total += item.price * item.qty;
@@ -170,7 +239,7 @@
           <head>
             <title>Struk Numpang Ngopi.crb</title>
             <style>
-              body { font-family: monospace; padding: 10px; }
+              body { font-family: monospace; padding: 10px; font-size: 13px; }
               h2 { text-align: center; margin-bottom: 10px; }
               hr { border: none; border-top: 1px dashed #000; margin: 10px 0; }
             </style>
@@ -197,4 +266,4 @@
     refreshCart();
   </script>
 </body>
-</html> 
+</html>
