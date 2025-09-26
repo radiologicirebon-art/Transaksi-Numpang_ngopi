@@ -1,145 +1,257 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Transaksi Numpang Ngopi.crb</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-</head>
-<body class="bg-gray-50 font-sans text-gray-900">
+  <title>Numpang Ngopi.crb — Kasir</title>
+  <style>
+    body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; background: #f8f9fa; }
+    header { background: #1d899b; color: #fff; padding: 15px; text-align: center; }
+    header h1 { margin: 0; font-size: 22px; }
+    header p { margin: 5px 0 0; font-size: 14px; }
 
-  <!-- HEADER -->
-  <header class="bg-[#3b2f2f] text-white p-4 text-center">
-    <h1 class="text-2xl font-bold">Transaksi Numpang Ngopi.crb</h1>
-    <marquee class="text-sm text-gray-200">#Kopinyabenerankopi.</marquee>
+    main { padding: 15px; max-width: 1000px; margin: auto; }
+
+    .card { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .card h2 { margin-top: 0; font-size: 18px; border-left: 4px solid #1d899b; padding-left: 8px; }
+
+    .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+    .menu-btn { background: #1d899b; color: #fff; border: none; padding: 12px; border-radius: 8px; font-size: 14px; cursor: pointer; transition: 0.2s; }
+    .menu-btn:hover { background: #166c79; }
+
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    button.action { flex: 1; padding: 12px; font-size: 14px; border-radius: 8px; cursor: pointer; }
+    .save { background: #28a745; color: #fff; border: none; }
+    .clear { background: #dc3545; color: #fff; border: none; }
+    .print { background: #ffc107; color: #000; border: none; }
+
+    input { padding: 8px; border: 1px solid #ccc; border-radius: 6px; width: 100%; margin: 5px 0; }
+
+    .cart-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #ddd; font-size: 14px; }
+    .summary p { margin: 5px 0; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Numpang Ngopi.crb — Kasir</h1>
+    <p>Sistem kasir modern untuk kedai kopi</p>
   </header>
 
-  <!-- MENU -->
-  <main class="p-4 space-y-6 pb-40">
-    
-    <!-- Menu Premium -->
-    <section>
-      <h2 class="text-lg font-semibold mb-2">☕ Menu Premium</h2>
-      <div class="grid grid-cols-2 gap-3">
-        <button onclick="addToCart('Kopi Gula Aren',10000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Kopi Gula Aren<br><span class="text-sm">Rp10.000</span></button>
-        <button onclick="addToCart('Kopi Latte',10000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Kopi Latte<br><span class="text-sm">Rp10.000</span></button>
-        <button onclick="addToCart('Kopi Cappuccino',12000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Kopi Cappuccino<br><span class="text-sm">Rp12.000</span></button>
-        <button onclick="addToCart('Kopi Stevia',10000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Kopi Stevia<br><span class="text-sm">Rp10.000</span></button>
-      </div>
-    </section>
+  <main>
+    <!-- Menu -->
+    <div class="card">
+      <h2>Menu Premium</h2>
+      <div id="menuKopi" class="menu-grid"></div>
+    </div>
 
-    <!-- Menu Keliling -->
-    <section>
-      <h2 class="text-lg font-semibold mb-2">🚲 Menu Keliling</h2>
-      <div class="grid grid-cols-2 gap-3">
-        <button onclick="addToCart('Kopi Aren',8000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Kopi Aren<br><span class="text-sm">Rp8.000</span></button>
-        <button onclick="addToCart('Kopi Latte',8000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Kopi Latte<br><span class="text-sm">Rp8.000</span></button>
-      </div>
-    </section>
+    <div class="card">
+      <h2>Menu Keliling</h2>
+      <div id="menuKeliling" class="menu-grid"></div>
+    </div>
 
-    <!-- Non Coffee Premium -->
-    <section>
-      <h2 class="text-lg font-semibold mb-2">🥤 Non Coffee Premium</h2>
-      <div class="grid grid-cols-2 gap-3">
-        <button onclick="addToCart('Taro Latte',10000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Taro Latte*<br><span class="text-sm">Rp10.000</span></button>
-        <button onclick="addToCart('Red Velvet Latte',10000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Red Velvet Latte*<br><span class="text-sm">Rp10.000</span></button>
-        <button onclick="addToCart('Chocolate',10000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Chocolate*<br><span class="text-sm">Rp10.000</span></button>
-        <button onclick="addToCart('Brownsugar Milk',10000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Brownsugar Milk<br><span class="text-sm">Rp10.000</span></button>
-      </div>
-    </section>
+    <div class="card">
+      <h2>Non Coffee Premium</h2>
+      <div id="menuNonKopiPremium" class="menu-grid"></div>
+    </div>
 
-    <!-- Non Coffee Keliling -->
-    <section>
-      <h2 class="text-lg font-semibold mb-2">🥛 Non Coffee Keliling</h2>
-      <div class="grid grid-cols-2 gap-3">
-        <button onclick="addToCart('Taro',5000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Taro<br><span class="text-sm">Rp5.000</span></button>
-        <button onclick="addToCart('Red Velvet',5000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Red Velvet<br><span class="text-sm">Rp5.000</span></button>
-        <button onclick="addToCart('Coklat',5000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Coklat<br><span class="text-sm">Rp5.000</span></button>
-        <button onclick="addToCart('Gula Ren Milk',5000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Gula Ren Milk<br><span class="text-sm">Rp5.000</span></button>
-      </div>
-    </section>
+    <div class="card">
+      <h2>Non Coffee Keliling</h2>
+      <div id="menuNonKopiKeliling" class="menu-grid"></div>
+    </div>
 
+    <!-- Keranjang -->
+    <div class="card">
+      <h2>Keranjang</h2>
+      <div id="cart"></div>
+      <div class="summary">
+        <p><strong>Total:</strong> Rp <span id="total">0</span></p>
+        <p><strong>Pembayar:</strong></p>
+        <input type="number" id="paidAmount" placeholder="Jumlah bayar">
+        <p><strong>Kembalian:</strong> Rp <span id="change">0</span></p>
+        <p><strong>Jumlah Item:</strong> <span id="itemCount">0</span></p>
+      </div>
+      <div class="btn-row">
+        <button class="action save" onclick="saveTransaction()">💾 Simpan</button>
+        <button class="action clear" onclick="clearCart()">🗑 Bersihkan</button>
+        <button class="action print" onclick="printReceipt()">🖨 Cetak Struk</button>
+      </div>
+    </div>
   </main>
 
-  <!-- KERANJANG -->
-  <aside class="fixed bottom-0 left-0 w-full bg-white shadow-xl rounded-t-2xl p-4">
-    <h2 class="font-bold text-lg mb-2">🛒 Keranjang</h2>
-    <ul id="cart" class="text-sm space-y-1 max-h-32 overflow-y-auto"></ul>
-    <p class="mt-2 font-semibold">Total: Rp <span id="total">0</span></p>
-    <div class="grid grid-cols-2 gap-2 mt-3">
-      <button onclick="saveTransaction()" class="bg-green-700 text-white py-2 rounded-xl">Simpan</button>
-      <button onclick="printReceipt()" class="bg-gray-700 text-white py-2 rounded-xl">Cetak</button>
-      <button onclick="sendWhatsApp()" class="bg-[#25D366] text-white py-2 rounded-xl">Kirim WA</button>
-      <button onclick="clearCart()" class="bg-red-700 text-white py-2 rounded-xl">Hapus</button>
-    </div>
-  </aside>
-
   <script>
-    // Firebase config
-    const firebaseConfig = {
-      databaseURL: "https://sistem-kasir-numpang-ngopi-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    // ---------------------------
+    // Data menu (UPDATE SESUAI PERMINTAAN)
+    // ---------------------------
+    let defaultMenu = {
+      premium: [
+        { name: "Kopi Gula Aren", price: 10000 },
+        { name: "Kopi Latte", price: 10000 },
+        { name: "Kopi Chapuchino", price: 12000 },
+        { name: "Kopi Stefia", price: 10000 }
+      ],
+      keliling: [
+        { name: "Kopi Aren", price: 8000 },
+        { name: "Kopi Latte", price: 8000 }
+      ],
+      nonKopiPremium: [
+        { name: "Tarro Latte*", price: 10000 },
+        { name: "Red Velvet Latte*", price: 10000 },
+        { name: "Chocolatte*", price: 10000 },
+        { name: "Brownsugar Milk", price: 10000 }
+      ],
+      nonKopiKeliling: [
+        { name: "Tarro", price: 5000 },
+        { name: "Redvelvet", price: 5000 },
+        { name: "Coklat", price: 5000 },
+        { name: "Gula Ren Milk", price: 5000 }
+      ]
     };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
 
     let cart = [];
-    function addToCart(item, price) {
-      cart.push({item, price});
-      renderCart();
+    let total = 0;
+
+    const menuKopiDiv = document.getElementById("menuKopi");
+    const menuKelilingDiv = document.getElementById("menuKeliling");
+    const menuNonKopiPremiumDiv = document.getElementById("menuNonKopiPremium");
+    const menuNonKopiKelilingDiv = document.getElementById("menuNonKopiKeliling");
+    const cartDiv = document.getElementById("cart");
+    const totalSpan = document.getElementById("total");
+    const itemCountSpan = document.getElementById("itemCount");
+    const changeSpan = document.getElementById("change");
+    const paidAmount = document.getElementById("paidAmount");
+
+    // ---------------------------
+    // Render Menu
+    // ---------------------------
+    function renderMenu() {
+      // Bersihkan dulu
+      menuKopiDiv.innerHTML = "";
+      menuKelilingDiv.innerHTML = "";
+      menuNonKopiPremiumDiv.innerHTML = "";
+      menuNonKopiKelilingDiv.innerHTML = "";
+
+      // Premium
+      defaultMenu.premium.forEach(item => {
+        let btn = document.createElement("button");
+        btn.className = "menu-btn";
+        btn.textContent = `${item.name} (Rp${item.price})`;
+        btn.onclick = () => addToCart(item);
+        menuKopiDiv.appendChild(btn);
+      });
+
+      // Keliling
+      defaultMenu.keliling.forEach(item => {
+        let btn = document.createElement("button");
+        btn.className = "menu-btn";
+        btn.textContent = `${item.name} (Rp${item.price})`;
+        btn.onclick = () => addToCart(item);
+        menuKelilingDiv.appendChild(btn);
+      });
+
+      // Non Coffee Premium
+      defaultMenu.nonKopiPremium.forEach(item => {
+        let btn = document.createElement("button");
+        btn.className = "menu-btn";
+        btn.textContent = `${item.name} (Rp${item.price})`;
+        btn.onclick = () => addToCart(item);
+        menuNonKopiPremiumDiv.appendChild(btn);
+      });
+
+      // Non Coffee Keliling
+      defaultMenu.nonKopiKeliling.forEach(item => {
+        let btn = document.createElement("button");
+        btn.className = "menu-btn";
+        btn.textContent = `${item.name} (Rp${item.price})`;
+        btn.onclick = () => addToCart(item);
+        menuNonKopiKelilingDiv.appendChild(btn);
+      });
     }
 
-    function renderCart() {
-      const cartList = document.getElementById("cart");
-      const totalEl = document.getElementById("total");
-      cartList.innerHTML = "";
-      let total = 0;
-      cart.forEach((c, i) => {
-        total += c.price;
-        const li = document.createElement("li");
-        li.textContent = `${c.item} - Rp${c.price.toLocaleString()}`;
-        cartList.appendChild(li);
+    // ---------------------------
+    // Keranjang
+    // ---------------------------
+    function addToCart(item) {
+      let found = cart.find(c => c.name === item.name);
+      if (found) {
+        found.qty++;
+      } else {
+        cart.push({ ...item, qty: 1 });
+      }
+      refreshCart();
+    }
+
+    function refreshCart() {
+      cartDiv.innerHTML = "";
+      total = 0;
+      let itemCount = 0;
+      cart.forEach((item, i) => {
+        let line = document.createElement("div");
+        line.className = "cart-item";
+        line.innerHTML = `
+          ${item.name} x${item.qty} - Rp${item.price * item.qty}
+          <button onclick="removeItem(${i})">❌</button>`;
+        cartDiv.appendChild(line);
+        total += item.price * item.qty;
+        itemCount += item.qty;
       });
-      totalEl.textContent = total.toLocaleString();
+      totalSpan.textContent = total;
+      itemCountSpan.textContent = itemCount;
+      let change = (parseInt(paidAmount.value) || 0) - total;
+      changeSpan.textContent = change >= 0 ? change : 0;
+    }
+
+    function removeItem(i) {
+      cart.splice(i, 1);
+      refreshCart();
     }
 
     function clearCart() {
       cart = [];
-      renderCart();
+      refreshCart();
     }
 
     function saveTransaction() {
-      const time = new Date().toISOString();
-      db.ref("transaksi/" + time).set({
-        items: cart,
-        total: cart.reduce((a,b)=>a+b.price,0),
-        waktu: time
-      });
-      alert("Transaksi disimpan ✅");
+      alert("✅ Transaksi berhasil disimpan.\nTotal: Rp " + total);
       clearCart();
+      paidAmount.value = "";
     }
 
+    // ---------------------------
+    // Cetak Struk
+    // ---------------------------
     function printReceipt() {
-      let struk = "=== Numpang Ngopi.crb ===\n";
-      cart.forEach(c => { struk += `${c.item} - Rp${c.price}\n`; });
-      struk += "Total: Rp" + cart.reduce((a,b)=>a+b.price,0);
-      const w = window.open();
-      w.document.write("<pre>" + struk + "</pre>");
+      let w = window.open('', '', 'width=400,height=600');
+      let receipt = `
+        <html>
+          <head>
+            <title>Struk Numpang Ngopi.crb</title>
+            <style>
+              body { font-family: monospace; padding: 10px; }
+              h2 { text-align: center; margin-bottom: 10px; }
+              hr { border: none; border-top: 1px dashed #000; margin: 10px 0; }
+              .right { text-align: right; }
+            </style>
+          </head>
+          <body>
+            <h2>Numpang Ngopi.crb</h2>
+            <div>${cart.map(item => `${item.name} x${item.qty} = Rp${item.price*item.qty}`).join("<br>")}</div>
+            <hr>
+            <p>Total: Rp ${total}</p>
+            <p>Bayar: Rp ${paidAmount.value || 0}</p>
+            <p>Kembali: Rp ${(paidAmount.value || 0) - total}</p>
+            <hr>
+            <p style="text-align:center;">Terima Kasih 🙏</p>
+          </body>
+        </html>
+      `;
+      w.document.write(receipt);
+      w.document.close();
       w.print();
     }
 
-    function sendWhatsApp() {
-      const total = cart.reduce((a,b)=>a+b.price,0);
-      let pesan = "Transaksi Numpang Ngopi:\n";
-      cart.forEach(c => pesan += `${c.item} - Rp${c.price}\n`);
-      pesan += `Total: Rp${total}`;
-      const nomor = prompt("Masukkan nomor WA (contoh: 089xxxx):");
-      if(nomor){
-        window.open(`https://wa.me/62${nomor.slice(1)}?text=${encodeURIComponent(pesan)}`);
-      }
-    }
+    // Init
+    renderMenu();
+    paidAmount.oninput = refreshCart;
   </script>
-
 </body>
 </html>
