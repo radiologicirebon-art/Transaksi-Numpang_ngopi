@@ -2,190 +2,144 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Transaksi Numpang Ngopi.crb</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script type="module">
-    // --- Firebase ---
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+</head>
+<body class="bg-gray-50 font-sans text-gray-900">
 
+  <!-- HEADER -->
+  <header class="bg-[#3b2f2f] text-white p-4 text-center">
+    <h1 class="text-2xl font-bold">Transaksi Numpang Ngopi.crb</h1>
+    <marquee class="text-sm text-gray-200">#Kopinyabenerankopi.</marquee>
+  </header>
+
+  <!-- MENU -->
+  <main class="p-4 space-y-6 pb-40">
+    
+    <!-- Menu Premium -->
+    <section>
+      <h2 class="text-lg font-semibold mb-2">☕ Menu Premium</h2>
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="addToCart('Kopi Gula Aren',10000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Kopi Gula Aren<br><span class="text-sm">Rp10.000</span></button>
+        <button onclick="addToCart('Kopi Latte',10000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Kopi Latte<br><span class="text-sm">Rp10.000</span></button>
+        <button onclick="addToCart('Kopi Cappuccino',12000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Kopi Cappuccino<br><span class="text-sm">Rp12.000</span></button>
+        <button onclick="addToCart('Kopi Stevia',10000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Kopi Stevia<br><span class="text-sm">Rp10.000</span></button>
+      </div>
+    </section>
+
+    <!-- Menu Keliling -->
+    <section>
+      <h2 class="text-lg font-semibold mb-2">🚲 Menu Keliling</h2>
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="addToCart('Kopi Aren',8000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Kopi Aren<br><span class="text-sm">Rp8.000</span></button>
+        <button onclick="addToCart('Kopi Latte',8000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Kopi Latte<br><span class="text-sm">Rp8.000</span></button>
+      </div>
+    </section>
+
+    <!-- Non Coffee Premium -->
+    <section>
+      <h2 class="text-lg font-semibold mb-2">🥤 Non Coffee Premium</h2>
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="addToCart('Taro Latte',10000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Taro Latte*<br><span class="text-sm">Rp10.000</span></button>
+        <button onclick="addToCart('Red Velvet Latte',10000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Red Velvet Latte*<br><span class="text-sm">Rp10.000</span></button>
+        <button onclick="addToCart('Chocolate',10000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Chocolate*<br><span class="text-sm">Rp10.000</span></button>
+        <button onclick="addToCart('Brownsugar Milk',10000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Brownsugar Milk<br><span class="text-sm">Rp10.000</span></button>
+      </div>
+    </section>
+
+    <!-- Non Coffee Keliling -->
+    <section>
+      <h2 class="text-lg font-semibold mb-2">🥛 Non Coffee Keliling</h2>
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="addToCart('Taro',5000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Taro<br><span class="text-sm">Rp5.000</span></button>
+        <button onclick="addToCart('Red Velvet',5000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Red Velvet<br><span class="text-sm">Rp5.000</span></button>
+        <button onclick="addToCart('Coklat',5000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Coklat<br><span class="text-sm">Rp5.000</span></button>
+        <button onclick="addToCart('Gula Ren Milk',5000)" class="p-4 bg-white rounded-xl shadow hover:bg-gray-100">Gula Ren Milk<br><span class="text-sm">Rp5.000</span></button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- KERANJANG -->
+  <aside class="fixed bottom-0 left-0 w-full bg-white shadow-xl rounded-t-2xl p-4">
+    <h2 class="font-bold text-lg mb-2">🛒 Keranjang</h2>
+    <ul id="cart" class="text-sm space-y-1 max-h-32 overflow-y-auto"></ul>
+    <p class="mt-2 font-semibold">Total: Rp <span id="total">0</span></p>
+    <div class="grid grid-cols-2 gap-2 mt-3">
+      <button onclick="saveTransaction()" class="bg-green-700 text-white py-2 rounded-xl">Simpan</button>
+      <button onclick="printReceipt()" class="bg-gray-700 text-white py-2 rounded-xl">Cetak</button>
+      <button onclick="sendWhatsApp()" class="bg-[#25D366] text-white py-2 rounded-xl">Kirim WA</button>
+      <button onclick="clearCart()" class="bg-red-700 text-white py-2 rounded-xl">Hapus</button>
+    </div>
+  </aside>
+
+  <script>
+    // Firebase config
     const firebaseConfig = {
       databaseURL: "https://sistem-kasir-numpang-ngopi-default-rtdb.asia-southeast1.firebasedatabase.app/"
     };
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    // --- Data Menu ---
-    const menus = {
-      "Menu Premium": [
-        { name: "Kopi Gula Aren", price: 10000 },
-        { name: "Kopi Latte", price: 10000 },
-        { name: "Kopi Chapuchino", price: 12000 },
-        { name: "Kopi Stefia", price: 10000 }
-      ],
-      "Menu Keliling": [
-        { name: "Kopi Aren", price: 8000 },
-        { name: "Kopi Latte", price: 8000 }
-      ],
-      "Non Coffe Premium": [
-        { name: "Tarro Latte*", price: 10000 },
-        { name: "Red Velvet Latte*", price: 10000 },
-        { name: "Chocolatte*", price: 10000 },
-        { name: "Brownsugar Milk", price: 10000 }
-      ],
-      "Non Coffe Keliling": [
-        { name: "Tarro", price: 5000 },
-        { name: "Redvelvet", price: 5000 },
-        { name: "Coklat", price: 5000 },
-        { name: "Gula Ren Milk", price: 5000 }
-      ]
-    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
     let cart = [];
-
-    // --- Render Menu ---
-    window.addEventListener("DOMContentLoaded", () => {
-      const menuContainer = document.getElementById("menu");
-      for (let kategori in menus) {
-        const section = document.createElement("div");
-        section.className = "bg-white shadow rounded-2xl p-4 mb-6";
-        section.innerHTML = `<h2 class="text-lg font-semibold mb-3">${kategori}</h2>`;
-        const grid = document.createElement("div");
-        grid.className = "grid grid-cols-2 gap-3";
-        menus[kategori].forEach(item => {
-          const btn = document.createElement("button");
-          btn.className = "bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-3 px-2 text-sm";
-          btn.textContent = `${item.name} - Rp ${item.price.toLocaleString()}`;
-          btn.onclick = () => addToCart(item);
-          grid.appendChild(btn);
-        });
-        section.appendChild(grid);
-        menuContainer.appendChild(section);
-      }
-      refreshCart();
-    });
-
-    // --- Cart Functions ---
-    function addToCart(item) {
-      let found = cart.find(c => c.name === item.name);
-      if (found) found.qty++;
-      else cart.push({ ...item, qty: 1 });
-      refreshCart();
+    function addToCart(item, price) {
+      cart.push({item, price});
+      renderCart();
     }
 
-    function removeItem(i) {
-      cart.splice(i, 1);
-      refreshCart();
+    function renderCart() {
+      const cartList = document.getElementById("cart");
+      const totalEl = document.getElementById("total");
+      cartList.innerHTML = "";
+      let total = 0;
+      cart.forEach((c, i) => {
+        total += c.price;
+        const li = document.createElement("li");
+        li.textContent = `${c.item} - Rp${c.price.toLocaleString()}`;
+        cartList.appendChild(li);
+      });
+      totalEl.textContent = total.toLocaleString();
     }
 
     function clearCart() {
       cart = [];
-      refreshCart();
+      renderCart();
     }
 
-    function refreshCart() {
-      const cartDiv = document.getElementById("cart");
-      cartDiv.innerHTML = "";
-      let total = 0, itemCount = 0;
-      cart.forEach((item, i) => {
-        total += item.price * item.qty;
-        itemCount += item.qty;
-        const row = document.createElement("div");
-        row.className = "flex justify-between items-center py-1 border-b";
-        row.innerHTML = `
-          <span>${item.name} x${item.qty}</span>
-          <span>Rp ${(item.price*item.qty).toLocaleString()}</span>
-          <button class="text-red-500" onclick="removeItem(${i})">✕</button>
-        `;
-        cartDiv.appendChild(row);
-      });
-      document.getElementById("total").textContent = total.toLocaleString();
-      document.getElementById("itemCount").textContent = itemCount;
-      const bayar = parseInt(document.getElementById("paidAmount").value) || 0;
-      document.getElementById("change").textContent = (bayar - total >= 0 ? (bayar - total).toLocaleString() : "0");
-    }
-
-    window.removeItem = removeItem;
-    window.clearCart = clearCart;
-
-    // --- Save Transaction to Firebase ---
-    window.saveTransaction = function () {
-      if (cart.length === 0) return alert("Keranjang kosong!");
-      const total = document.getElementById("total").textContent;
-      const bayar = document.getElementById("paidAmount").value;
-      const kembali = document.getElementById("change").textContent;
-
-      const transaksiRef = push(ref(db, "transaksi"));
-      set(transaksiRef, {
+    function saveTransaction() {
+      const time = new Date().toISOString();
+      db.ref("transaksi/" + time).set({
         items: cart,
-        total: total,
-        bayar: bayar,
-        kembali: kembali,
-        timestamp: new Date().toISOString()
+        total: cart.reduce((a,b)=>a+b.price,0),
+        waktu: time
       });
-
-      alert("✅ Transaksi tersimpan!");
+      alert("Transaksi disimpan ✅");
       clearCart();
-      document.getElementById("paidAmount").value = "";
     }
 
-    // --- Cetak Struk ---
-    window.printReceipt = function () {
-      let total = document.getElementById("total").textContent;
-      let bayar = document.getElementById("paidAmount").value || "0";
-      let kembali = document.getElementById("change").textContent;
-      let content = `
-        Numpang Ngopi.crb\n#Kopinyabenerankopi.\n\n
-        ${cart.map(i => `${i.name} x${i.qty} = Rp ${(i.price*i.qty).toLocaleString()}`).join("\n")}
-        -----------------------------\n
-        Total: Rp ${total}\nBayar: Rp ${bayar}\nKembali: Rp ${kembali}\n
-        Terima kasih 🙏
-      `;
-      let w = window.open("", "", "width=400,height=600");
-      w.document.write(`<pre>${content}</pre>`);
+    function printReceipt() {
+      let struk = "=== Numpang Ngopi.crb ===\n";
+      cart.forEach(c => { struk += `${c.item} - Rp${c.price}\n`; });
+      struk += "Total: Rp" + cart.reduce((a,b)=>a+b.price,0);
+      const w = window.open();
+      w.document.write("<pre>" + struk + "</pre>");
       w.print();
     }
 
-    // --- Kirim WhatsApp ---
-    window.sendWhatsApp = function () {
-      let nohp = prompt("Masukkan nomor WhatsApp (contoh: 089xxxx)");
-      if (!nohp) return;
-      let total = document.getElementById("total").textContent;
-      let bayar = document.getElementById("paidAmount").value || "0";
-      let kembali = document.getElementById("change").textContent;
-      let pesan = `Numpang Ngopi.crb%0A#Kopinyabenerankopi.%0A%0A${cart.map(i => `${i.name} x${i.qty} = Rp ${(i.price*i.qty).toLocaleString()}`).join("%0A")}%0A--------------------%0ATotal: Rp ${total}%0ABayar: Rp ${bayar}%0AKembali: Rp ${kembali}%0A%0ATerima kasih 🙏`;
-      window.open(`https://wa.me/${nohp}?text=${pesan}`, "_blank");
+    function sendWhatsApp() {
+      const total = cart.reduce((a,b)=>a+b.price,0);
+      let pesan = "Transaksi Numpang Ngopi:\n";
+      cart.forEach(c => pesan += `${c.item} - Rp${c.price}\n`);
+      pesan += `Total: Rp${total}`;
+      const nomor = prompt("Masukkan nomor WA (contoh: 089xxxx):");
+      if(nomor){
+        window.open(`https://wa.me/62${nomor.slice(1)}?text=${encodeURIComponent(pesan)}`);
+      }
     }
   </script>
-</head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
-  <!-- Header -->
-  <header class="bg-emerald-700 text-white p-4 text-center shadow">
-    <h1 class="text-xl font-bold">Transaksi Numpang Ngopi.crb</h1>
-    <marquee class="text-sm">#Kopinyabenerankopi.</marquee>
-  </header>
 
-  <!-- Main Content -->
-  <main id="menu" class="flex-1 p-4 overflow-y-auto"></main>
-
-  <!-- Cart -->
-  <div class="bg-white shadow-2xl p-4 rounded-t-2xl">
-    <h2 class="text-lg font-semibold mb-2">Keranjang</h2>
-    <div id="cart" class="max-h-40 overflow-y-auto mb-2"></div>
-    <div class="text-sm space-y-1">
-      <p><b>Total:</b> Rp <span id="total">0</span></p>
-      <p><b>Jumlah Item:</b> <span id="itemCount">0</span></p>
-      <p><b>Pembayar:</b></p>
-      <input type="number" id="paidAmount" oninput="refreshCart()" class="w-full border rounded px-2 py-1" placeholder="Jumlah bayar">
-      <p><b>Kembalian:</b> Rp <span id="change">0</span></p>
-    </div>
-    <div class="grid grid-cols-2 gap-2 mt-3">
-      <button onclick="saveTransaction()" class="bg-emerald-600 text-white py-2 rounded-xl">💾 Simpan</button>
-      <button onclick="clearCart()" class="bg-red-500 text-white py-2 rounded-xl">🗑 Bersihkan</button>
-      <button onclick="printReceipt()" class="bg-yellow-400 text-black py-2 rounded-xl">🖨 Cetak Struk</button>
-      <button onclick="sendWhatsApp()" class="bg-blue-500 text-white py-2 rounded-xl">📱 Kirim WA</button>
-    </div>
-  </div>
 </body>
 </html>
