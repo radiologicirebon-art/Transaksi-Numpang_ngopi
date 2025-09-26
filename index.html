@@ -24,6 +24,7 @@
     .save { background: #28a745; color: #fff; border: none; }
     .clear { background: #dc3545; color: #fff; border: none; }
     .print { background: #ffc107; color: #000; border: none; }
+    .wa { background: #25d366; color: #fff; border: none; }
 
     input { padding: 8px; border: 1px solid #ccc; border-radius: 6px; width: 100%; margin: 5px 0; }
 
@@ -67,11 +68,16 @@
         <p><strong>Total:</strong> Rp <span id="total">0</span></p>
         <p><strong>Pembayar:</strong></p>
         <input type="number" id="paidAmount" placeholder="Jumlah bayar">
+
+        <p><strong>Nomor WhatsApp (format 08):</strong></p>
+        <input type="text" id="waNumber" placeholder="08xxxxxxxxxx">
+
         <p><strong>Kembalian:</strong> Rp <span id="change">0</span></p>
         <p><strong>Jumlah Item:</strong> <span id="itemCount">0</span></p>
       </div>
       <div class="btn-row">
         <button class="action save" onclick="saveTransaction()">💾 Simpan</button>
+        <button class="action wa" onclick="sendWhatsApp()">📱 Kirim WhatsApp</button>
         <button class="action clear" onclick="clearCart()">🗑 Bersihkan</button>
         <button class="action print" onclick="printReceipt()">🖨 Cetak Struk</button>
       </div>
@@ -80,7 +86,7 @@
 
   <script>
     // ---------------------------
-    // Data menu (UPDATE SESUAI PERMINTAAN)
+    // Data menu
     // ---------------------------
     let defaultMenu = {
       premium: [
@@ -119,18 +125,17 @@
     const itemCountSpan = document.getElementById("itemCount");
     const changeSpan = document.getElementById("change");
     const paidAmount = document.getElementById("paidAmount");
+    const waNumberInput = document.getElementById("waNumber");
 
     // ---------------------------
     // Render Menu
     // ---------------------------
     function renderMenu() {
-      // Bersihkan dulu
       menuKopiDiv.innerHTML = "";
       menuKelilingDiv.innerHTML = "";
       menuNonKopiPremiumDiv.innerHTML = "";
       menuNonKopiKelilingDiv.innerHTML = "";
 
-      // Premium
       defaultMenu.premium.forEach(item => {
         let btn = document.createElement("button");
         btn.className = "menu-btn";
@@ -139,7 +144,6 @@
         menuKopiDiv.appendChild(btn);
       });
 
-      // Keliling
       defaultMenu.keliling.forEach(item => {
         let btn = document.createElement("button");
         btn.className = "menu-btn";
@@ -148,7 +152,6 @@
         menuKelilingDiv.appendChild(btn);
       });
 
-      // Non Coffee Premium
       defaultMenu.nonKopiPremium.forEach(item => {
         let btn = document.createElement("button");
         btn.className = "menu-btn";
@@ -157,7 +160,6 @@
         menuNonKopiPremiumDiv.appendChild(btn);
       });
 
-      // Non Coffee Keliling
       defaultMenu.nonKopiKeliling.forEach(item => {
         let btn = document.createElement("button");
         btn.className = "menu-btn";
@@ -172,11 +174,8 @@
     // ---------------------------
     function addToCart(item) {
       let found = cart.find(c => c.name === item.name);
-      if (found) {
-        found.qty++;
-      } else {
-        cart.push({ ...item, qty: 1 });
-      }
+      if (found) found.qty++;
+      else cart.push({ ...item, qty: 1 });
       refreshCart();
     }
 
@@ -187,9 +186,7 @@
       cart.forEach((item, i) => {
         let line = document.createElement("div");
         line.className = "cart-item";
-        line.innerHTML = `
-          ${item.name} x${item.qty} - Rp${item.price * item.qty}
-          <button onclick="removeItem(${i})">❌</button>`;
+        line.innerHTML = `${item.name} x${item.qty} - Rp${item.price * item.qty} <button onclick="removeItem(${i})">❌</button>`;
         cartDiv.appendChild(line);
         total += item.price * item.qty;
         itemCount += item.qty;
@@ -214,6 +211,33 @@
       alert("✅ Transaksi berhasil disimpan.\nTotal: Rp " + total);
       clearCart();
       paidAmount.value = "";
+      waNumberInput.value = "";
+    }
+
+    // ---------------------------
+    // Kirim WhatsApp
+    // ---------------------------
+    function sendWhatsApp() {
+      let number = waNumberInput.value.trim();
+      if (!number.startsWith("08")) {
+        alert("⚠️ Nomor WhatsApp harus dimulai dengan 08");
+        return;
+      }
+      if (cart.length === 0) {
+        alert("🛒 Keranjang masih kosong!");
+        return;
+      }
+
+      let message = `Halo! Ini rincian pesanan Anda di *Numpang Ngopi.crb* ☕\n\n`;
+      cart.forEach(item => {
+        message += `• ${item.name} x${item.qty} = Rp${item.price * item.qty}\n`;
+      });
+      message += `\nTotal: *Rp ${total}*\nTerima kasih 🙏`;
+
+      // ubah ke format internasional
+      let intlNumber = "62" + number.substring(1);
+      let url = `https://wa.me/${intlNumber}?text=${encodeURIComponent(message)}`;
+      window.open(url, "_blank");
     }
 
     // ---------------------------
@@ -229,7 +253,6 @@
               body { font-family: monospace; padding: 10px; }
               h2 { text-align: center; margin-bottom: 10px; }
               hr { border: none; border-top: 1px dashed #000; margin: 10px 0; }
-              .right { text-align: right; }
             </style>
           </head>
           <body>
@@ -242,8 +265,7 @@
             <hr>
             <p style="text-align:center;">Terima Kasih 🙏</p>
           </body>
-        </html>
-      `;
+        </html>`;
       w.document.write(receipt);
       w.document.close();
       w.print();
